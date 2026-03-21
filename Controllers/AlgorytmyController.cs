@@ -82,6 +82,7 @@ namespace University_Admissions_Scoring_Engine.Controllers
             var kierunki = await _context.Kierunki
                 .Include(x => x.Tryb)
                 .Include(x => x.Rodzaj)
+                .Include(x => x.Algorytm)
                 .OrderBy(x => x.Nazwa)
                 .ToListAsync();
 
@@ -108,13 +109,24 @@ namespace University_Admissions_Scoring_Engine.Controllers
             if (algorytm == null)
                 return NotFound();
 
+            model.WybraneKierunkiIds ??= new List<int>();
+
             var wszystkieKierunki = await _context.Kierunki.ToListAsync();
 
             foreach (var kierunek in wszystkieKierunki)
             {
-                if (model.WybraneKierunkiIds.Contains(kierunek.IdKierunek))
+                var isSelected = model.WybraneKierunkiIds.Contains(kierunek.IdKierunek);
+
+                if (isSelected)
                 {
                     kierunek.AlgorytmId = algorytm.IdAlgorytm;
+                }
+                else
+                {
+                    if (kierunek.AlgorytmId == algorytm.IdAlgorytm)
+                    {
+                        kierunek.AlgorytmId = null;
+                    }
                 }
             }
 

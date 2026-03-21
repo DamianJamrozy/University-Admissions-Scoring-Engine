@@ -16,6 +16,12 @@ namespace University_Admissions_Scoring_Engine.Services
 
         public async Task CalculateForKierunekAsync(int kierunekId)
         {
+            await CalculatePointsOnlyAsync(kierunekId);
+            await GenerateRankingOnlyAsync(kierunekId);
+        }
+
+        public async Task CalculatePointsOnlyAsync(int kierunekId)
+        {
             var kandydaci = await _context.KandydatKierunki
                 .Where(x => x.KierunekId == kierunekId)
                 .ToListAsync();
@@ -27,6 +33,10 @@ namespace University_Admissions_Scoring_Engine.Services
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task GenerateRankingOnlyAsync(int kierunekId)
+        {
             await CalculateRankingAsync(kierunekId);
         }
 
@@ -34,6 +44,9 @@ namespace University_Admissions_Scoring_Engine.Services
         {
             var kierunek = await _context.Kierunki
                 .FirstAsync(k => k.IdKierunek == kierunekId);
+
+            if (!kierunek.AlgorytmId.HasValue)
+                return 0m;
 
             var dyplom = await _context.KandydatDyplomy
                 .Where(d => d.KandydatId == kandydatId)
@@ -191,8 +204,6 @@ namespace University_Admissions_Scoring_Engine.Services
             bool requirementFailed = false;
             var candidates = new List<GroupEvaluationCandidate>();
 
-            // KLUCZOWA ZMIANA:
-            // elementy grupujemy po przedmiocie i z jednego przedmiotu wybieramy najlepszą kombinację
             var subjectBlocks = ownElements
                 .GroupBy(e => e.PrzedmiotRodzajPoziom!.PrzedmiotId)
                 .ToList();
@@ -365,7 +376,8 @@ namespace University_Admissions_Scoring_Engine.Services
         {
             var lista = await _context.KandydatKierunki
                 .Where(k => k.KierunekId == kierunekId)
-                .OrderByDescending(k => k.Punkty)
+                .OrderByDescending(k => k.Punkty ?? 0)
+                .ThenBy(k => k.KandydatId)
                 .ToListAsync();
 
             var kierunek = await _context.Kierunki

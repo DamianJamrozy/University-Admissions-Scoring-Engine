@@ -7,8 +7,6 @@ namespace University_Admissions_Scoring_Engine.Models
         [Key]
         public int IdKierunek { get; set; }
 
-        [Required]
-        [MaxLength(200)]
         public string Nazwa { get; set; } = string.Empty;
 
         public int TrybId { get; set; }
@@ -18,7 +16,7 @@ namespace University_Admissions_Scoring_Engine.Models
         public int MaxPrzyjetych { get; set; }
         public int MaxListaRezerwowa { get; set; }
 
-        public int AlgorytmId { get; set; }
+        public int? AlgorytmId { get; set; }
 
         public KierunekTryb? Tryb { get; set; }
         public KierunekRodzaj? Rodzaj { get; set; }
