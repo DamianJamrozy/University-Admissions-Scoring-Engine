@@ -1,0 +1,85 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmEditorViewModel
+
+@{
+    var rootGroups = Model.Groups
+        .Where(g => g.RodzicId == null)
+        .OrderBy(g => g.IdAlgorytmGrupa)
+        .ToList();
+
+    var groupNumbers = Model.Groups
+        .OrderBy(g => g.IdAlgorytmGrupa)
+        .Select((g, i) => new { g.IdAlgorytmGrupa, Number = i })
+        .ToDictionary(x => x.IdAlgorytmGrupa, x => x.Number);
+}
+
+<div class="panel-box">
+    <h3>Podgląd</h3>
+
+    @if (!rootGroups.Any())
+    {
+        <div class="empty-state">
+            Brak grup dla wybranej matury.
+        </div>
+    }
+    else
+    {
+        @foreach (var root in rootGroups)
+        {
+            @await Html.PartialAsync("_AlgorytmPreviewNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+            {
+                CurrentGroup = root,
+        AllGroups = Model.Groups,
+        AllElements = Model.Elements,
+        Operacje = Model.Operacje,
+        PrzedmiotOpcje = Model.PrzedmiotOpcje,
+        AlgorytmId = Model.Algorytm.IdAlgorytm,
+        AlgorytmMaturaId = Model.AlgorytmMaturaId,
+        IsRoot = true,
+        GroupNumbers = groupNumbers
+        })
+        }
+    }
+</div>
+
+<div class="sticky-save">
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-dark btn-lg" onclick="openTestModal(@Model.Algorytm.IdAlgorytm, @Model.SelectedMaturaId)">
+            Testuj algorytm
+        </button>
+
+        <button type="button" class="btn btn-success btn-lg" onclick="saveAlgorithm(@Model.Algorytm.IdAlgorytm, @Model.SelectedMaturaId)">
+            Zapisz algorytm
+        </button>
+    </div>
+</div>
+
+<div class="panel-box">
+    <h3>Edytor</h3>
+
+    @if (!rootGroups.Any())
+    {
+        <div class="empty-state">
+            Kliknij „Dodaj grupę główną”, aby rozpocząć budowę algorytmu.
+        </div>
+    }
+    else
+    {
+        <div class="tree">
+            @foreach (var root in rootGroups)
+            {
+                @await Html.PartialAsync("_AlgorytmEditorNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+                {
+                    CurrentGroup = root,
+                AllGroups = Model.Groups,
+                AllElements = Model.Elements,
+                Operacje = Model.Operacje,
+                PrzedmiotOpcje = Model.PrzedmiotOpcje,
+                AlgorytmId = Model.Algorytm.IdAlgorytm,
+                AlgorytmMaturaId = Model.AlgorytmMaturaId,
+                IsRoot = true,
+                GroupNumbers = groupNumbers
+                })
+                }
+        </div>
+    }
+</div>

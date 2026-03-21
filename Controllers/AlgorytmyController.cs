@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using University_Admissions_Scoring_Engine.Data;
 using University_Admissions_Scoring_Engine.Models;
+using University_Admissions_Scoring_Engine.Services;
 using University_Admissions_Scoring_Engine.ViewModels;
 
 namespace University_Admissions_Scoring_Engine.Controllers
@@ -9,10 +10,12 @@ namespace University_Admissions_Scoring_Engine.Controllers
     public class AlgorytmyController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly AdmissionScoringService _scoringService;
 
-        public AlgorytmyController(AppDbContext context)
+        public AlgorytmyController(AppDbContext context, AdmissionScoringService scoringService)
         {
             _context = context;
+            _scoringService = scoringService;
         }
 
         public async Task<IActionResult> Index()
@@ -50,78 +53,21 @@ namespace University_Admissions_Scoring_Engine.Controllers
 
         public async Task<IActionResult> Details(int id, int? maturaId)
         {
-            var algorytm = await _context.Algorytmy
-                .FirstOrDefaultAsync(a => a.IdAlgorytm == id);
-
-            if (algorytm == null)
+            var vm = await BuildEditorViewModelAsync(id, maturaId);
+            if (vm == null)
                 return NotFound();
 
-            var matury = await _context.Matury
-                .OrderBy(x => x.IdMatura)
-                .ToListAsync();
-
-            var selectedMaturaId = maturaId ?? matury.First().IdMatura;
-
-            var algorytmMatura = await _context.AlgorytmyMatur
-                .FirstOrDefaultAsync(x => x.AlgorytmId == id && x.MaturaId == selectedMaturaId);
-
-            if (algorytmMatura == null)
-            {
-                algorytmMatura = new AlgorytmMatura
-                {
-                    AlgorytmId = id,
-                    MaturaId = selectedMaturaId
-                };
-
-                _context.AlgorytmyMatur.Add(algorytmMatura);
-                await _context.SaveChangesAsync();
-            }
-
-            var groups = await _context.AlgorytmGrupy
-                .Include(g => g.AlgorytmOperacja)
-                .Where(g => g.AlgorytmMaturaId == algorytmMatura.IdAlgorytmMatura)
-                .OrderBy(g => g.IdAlgorytmGrupa)
-                .ToListAsync();
-
-            var groupIds = groups.Select(g => g.IdAlgorytmGrupa).ToList();
-
-            var elements = await _context.AlgorytmLicze
-                .Include(e => e.PrzedmiotRodzajPoziom)
-                    .ThenInclude(p => p!.Przedmiot)
-                .Include(e => e.PrzedmiotRodzajPoziom)
-                    .ThenInclude(p => p!.PrzedmiotRodzaj)
-                .Include(e => e.PrzedmiotRodzajPoziom)
-                    .ThenInclude(p => p!.PrzedmiotPoziom)
-                .Where(e => groupIds.Contains(e.AlgorytmGrupaId))
-                .OrderBy(e => e.IdAlgorytmLicz)
-                .ToListAsync();
-
-            var operacje = await _context.AlgorytmOperacje
-                .OrderBy(x => x.Nazwa)
-                .ToListAsync();
-
-            var przedmioty = await _context.PrzedmiotRodzajPoziomy
-                .Include(x => x.Przedmiot)
-                .Include(x => x.PrzedmiotRodzaj)
-                .Include(x => x.PrzedmiotPoziom)
-                .OrderBy(x => x.Przedmiot!.Nazwa)
-                .ThenBy(x => x.PrzedmiotRodzaj!.Nazwa)
-                .ThenBy(x => x.PrzedmiotPoziom!.Nazwa)
-                .ToListAsync();
-
-            var vm = new AlgorytmEditorViewModel
-            {
-                Algorytm = algorytm,
-                SelectedMaturaId = selectedMaturaId,
-                AlgorytmMaturaId = algorytmMatura.IdAlgorytmMatura,
-                Matury = matury,
-                Groups = groups,
-                Elements = elements,
-                Operacje = operacje,
-                PrzedmiotOpcje = przedmioty
-            };
-
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditorContent(int id, int? maturaId)
+        {
+            var vm = await BuildEditorViewModelAsync(id, maturaId);
+            if (vm == null)
+                return NotFound();
+
+            return PartialView("_AlgorytmWorkspace", vm);
         }
 
         [HttpGet]
@@ -180,7 +126,7 @@ namespace University_Admissions_Scoring_Engine.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddGroupInline(int algorytmMaturaId, int? rodzicId)
+        public async Task<IActionResult> AddGroupInlineAjax(int algorytmMaturaId, int? rodzicId)
         {
             var operacja = await _context.AlgorytmOperacje
                 .OrderBy(x => x.IdAlgorytmOperacja)
@@ -196,18 +142,16 @@ namespace University_Admissions_Scoring_Engine.Controllers
             _context.AlgorytmGrupy.Add(grupa);
             await _context.SaveChangesAsync();
 
-            var alg = await _context.AlgorytmyMatur.FindAsync(algorytmMaturaId);
-
-            return RedirectToAction(nameof(Details), new { id = alg!.AlgorytmId, maturaId = alg.MaturaId });
+            return Json(new { success = true });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddElementInline(int groupId)
+        public async Task<IActionResult> AddElementInlineAjax(int groupId)
         {
             var grupa = await _context.AlgorytmGrupy.FindAsync(groupId);
             if (grupa == null)
-                return NotFound();
+                return Json(new { success = false });
 
             var first = await _context.PrzedmiotRodzajPoziomy
                 .OrderBy(x => x.IdPrzedmiotRodzajPoziom)
@@ -223,88 +167,30 @@ namespace University_Admissions_Scoring_Engine.Controllers
             _context.AlgorytmLicze.Add(element);
             await _context.SaveChangesAsync();
 
-            var alg = await _context.AlgorytmyMatur.FindAsync(grupa.AlgorytmMaturaId);
-
-            return RedirectToAction(nameof(Details), new { id = alg!.AlgorytmId, maturaId = alg.MaturaId });
+            return Json(new { success = true });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateGroupOperation(int groupId, int operationId)
+        public async Task<IActionResult> DeleteElementAjax(int elementId)
         {
-            var grupa = await _context.AlgorytmGrupy.FindAsync(groupId);
-            if (grupa == null)
-                return NotFound();
-
-            grupa.AlgorytmOperacjaId = operationId;
-            await _context.SaveChangesAsync();
-
-            var alg = await _context.AlgorytmyMatur.FindAsync(grupa.AlgorytmMaturaId);
-
-            return RedirectToAction(nameof(Details), new { id = alg!.AlgorytmId, maturaId = alg.MaturaId });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveAll(
-            int algorytmId,
-            int maturaId,
-            List<int> elementIds,
-            List<int> przedmiotRodzajPoziomIds,
-            List<decimal> liczby)
-        {
-            if (elementIds.Count != przedmiotRodzajPoziomIds.Count || elementIds.Count != liczby.Count)
-            {
-                return RedirectToAction(nameof(Details), new { id = algorytmId, maturaId });
-            }
-
-            var ids = elementIds.Distinct().ToList();
-
-            var elements = await _context.AlgorytmLicze
-                .Where(x => ids.Contains(x.IdAlgorytmLicz))
-                .ToListAsync();
-
-            for (int i = 0; i < elementIds.Count; i++)
-            {
-                var el = elements.FirstOrDefault(x => x.IdAlgorytmLicz == elementIds[i]);
-                if (el == null)
-                    continue;
-
-                el.PrzedmiotRodzajPoziomId = przedmiotRodzajPoziomIds[i];
-                el.Liczba = liczby[i];
-            }
-
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction(nameof(Details), new { id = algorytmId, maturaId });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteElement(int elementId)
-        {
-            var element = await _context.AlgorytmLicze
-                .Include(e => e.AlgorytmGrupa)
-                .FirstOrDefaultAsync(e => e.IdAlgorytmLicz == elementId);
-
+            var element = await _context.AlgorytmLicze.FirstOrDefaultAsync(e => e.IdAlgorytmLicz == elementId);
             if (element == null)
-                return NotFound();
-
-            var alg = await _context.AlgorytmyMatur.FindAsync(element.AlgorytmGrupa!.AlgorytmMaturaId);
+                return Json(new { success = false });
 
             _context.AlgorytmLicze.Remove(element);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Details), new { id = alg!.AlgorytmId, maturaId = alg.MaturaId });
+            return Json(new { success = true });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteGroup(int groupId)
+        public async Task<IActionResult> DeleteGroupAjax(int groupId)
         {
             var grupa = await _context.AlgorytmGrupy.FindAsync(groupId);
             if (grupa == null)
-                return NotFound();
+                return Json(new { success = false });
 
             var ids = await GetGroupBranch(groupId);
 
@@ -320,9 +206,64 @@ namespace University_Admissions_Scoring_Engine.Controllers
             _context.AlgorytmGrupy.RemoveRange(groups);
             await _context.SaveChangesAsync();
 
-            var alg = await _context.AlgorytmyMatur.FindAsync(grupa.AlgorytmMaturaId);
+            return Json(new { success = true });
+        }
 
-            return RedirectToAction(nameof(Details), new { id = alg!.AlgorytmId, maturaId = alg.MaturaId });
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveAllAjax([FromBody] SaveAlgorithmRequest request)
+        {
+            if (request == null)
+                return Json(new { success = false });
+
+            if (request.GroupIds.Count != request.OperationIds.Count)
+                return Json(new { success = false });
+
+            if (request.ElementIds.Count != request.PrzedmiotRodzajPoziomIds.Count ||
+                request.ElementIds.Count != request.Liczby.Count)
+                return Json(new { success = false });
+
+            var groups = await _context.AlgorytmGrupy
+                .Where(x => request.GroupIds.Contains(x.IdAlgorytmGrupa))
+                .ToListAsync();
+
+            for (int i = 0; i < request.GroupIds.Count; i++)
+            {
+                var g = groups.FirstOrDefault(x => x.IdAlgorytmGrupa == request.GroupIds[i]);
+                if (g != null)
+                    g.AlgorytmOperacjaId = request.OperationIds[i];
+            }
+
+            var elements = await _context.AlgorytmLicze
+                .Where(x => request.ElementIds.Contains(x.IdAlgorytmLicz))
+                .ToListAsync();
+
+            for (int i = 0; i < request.ElementIds.Count; i++)
+            {
+                var e = elements.FirstOrDefault(x => x.IdAlgorytmLicz == request.ElementIds[i]);
+                if (e == null)
+                    continue;
+
+                e.PrzedmiotRodzajPoziomId = request.PrzedmiotRodzajPoziomIds[i];
+                e.Liczba = request.Liczby[i];
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TestAlgorithm([FromBody] AlgorytmTestRequestViewModel request)
+        {
+            var result = await _scoringService.EvaluateTestAsync(request);
+
+            return Json(new
+            {
+                success = true,
+                points = result.Points,
+                lines = result.Lines
+            });
         }
 
         [HttpPost]
@@ -369,6 +310,80 @@ namespace University_Admissions_Scoring_Engine.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        private async Task<AlgorytmEditorViewModel?> BuildEditorViewModelAsync(int id, int? maturaId)
+        {
+            var algorytm = await _context.Algorytmy
+                .FirstOrDefaultAsync(a => a.IdAlgorytm == id);
+
+            if (algorytm == null)
+                return null;
+
+            var matury = await _context.Matury
+                .OrderBy(x => x.IdMatura)
+                .ToListAsync();
+
+            var selectedMaturaId = maturaId ?? matury.First().IdMatura;
+
+            var algorytmMatura = await _context.AlgorytmyMatur
+                .FirstOrDefaultAsync(x => x.AlgorytmId == id && x.MaturaId == selectedMaturaId);
+
+            if (algorytmMatura == null)
+            {
+                algorytmMatura = new AlgorytmMatura
+                {
+                    AlgorytmId = id,
+                    MaturaId = selectedMaturaId
+                };
+
+                _context.AlgorytmyMatur.Add(algorytmMatura);
+                await _context.SaveChangesAsync();
+            }
+
+            var groups = await _context.AlgorytmGrupy
+                .Include(g => g.AlgorytmOperacja)
+                .Where(g => g.AlgorytmMaturaId == algorytmMatura.IdAlgorytmMatura)
+                .OrderBy(g => g.IdAlgorytmGrupa)
+                .ToListAsync();
+
+            var groupIds = groups.Select(g => g.IdAlgorytmGrupa).ToList();
+
+            var elements = await _context.AlgorytmLicze
+                .Include(e => e.PrzedmiotRodzajPoziom)
+                    .ThenInclude(p => p!.Przedmiot)
+                .Include(e => e.PrzedmiotRodzajPoziom)
+                    .ThenInclude(p => p!.PrzedmiotRodzaj)
+                .Include(e => e.PrzedmiotRodzajPoziom)
+                    .ThenInclude(p => p!.PrzedmiotPoziom)
+                .Where(e => groupIds.Contains(e.AlgorytmGrupaId))
+                .OrderBy(e => e.IdAlgorytmLicz)
+                .ToListAsync();
+
+            var operacje = await _context.AlgorytmOperacje
+                .OrderBy(x => x.Nazwa)
+                .ToListAsync();
+
+            var przedmioty = await _context.PrzedmiotRodzajPoziomy
+                .Include(x => x.Przedmiot)
+                .Include(x => x.PrzedmiotRodzaj)
+                .Include(x => x.PrzedmiotPoziom)
+                .OrderBy(x => x.Przedmiot!.Nazwa)
+                .ThenBy(x => x.PrzedmiotRodzaj!.Nazwa)
+                .ThenBy(x => x.PrzedmiotPoziom!.Nazwa)
+                .ToListAsync();
+
+            return new AlgorytmEditorViewModel
+            {
+                Algorytm = algorytm,
+                SelectedMaturaId = selectedMaturaId,
+                AlgorytmMaturaId = algorytmMatura.IdAlgorytmMatura,
+                Matury = matury,
+                Groups = groups,
+                Elements = elements,
+                Operacje = operacje,
+                PrzedmiotOpcje = przedmioty
+            };
+        }
+
         private async Task<List<int>> GetGroupBranch(int id)
         {
             var all = await _context.AlgorytmGrupy.ToListAsync();
@@ -391,5 +406,18 @@ namespace University_Admissions_Scoring_Engine.Controllers
 
             return result;
         }
+    }
+
+    public class SaveAlgorithmRequest
+    {
+        public int AlgorytmId { get; set; }
+        public int MaturaId { get; set; }
+
+        public List<int> GroupIds { get; set; } = new();
+        public List<int> OperationIds { get; set; } = new();
+
+        public List<int> ElementIds { get; set; } = new();
+        public List<int> PrzedmiotRodzajPoziomIds { get; set; } = new();
+        public List<decimal> Liczby { get; set; } = new();
     }
 }

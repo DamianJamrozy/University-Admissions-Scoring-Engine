@@ -1,16 +1,5 @@
 ﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmEditorViewModel
-
-@{
-    var rootGroups = Model.Groups
-        .Where(g => g.RodzicId == null)
-        .OrderBy(g => g.IdAlgorytmGrupa)
-        .ToList();
-
-    var groupNumbers = Model.Groups
-        .OrderBy(g => g.IdAlgorytmGrupa)
-        .Select((g, i) => new { g.IdAlgorytmGrupa, Number = i })
-        .ToDictionary(x => x.IdAlgorytmGrupa, x => x.Number);
-}
+@using System.Text.Json
 
 <style>
     .alg-page {
@@ -61,16 +50,16 @@
         transition: 0.2s ease;
     }
 
-        .matura-link:hover {
-            background: #f3f7fb;
-            text-decoration: none;
-        }
+    .matura-link:hover {
+        background: #f3f7fb;
+        text-decoration: none;
+    }
 
-        .matura-link.active {
-            background: #0d6efd;
-            color: #fff;
-            border-color: #0d6efd;
-        }
+    .matura-link.active {
+        background: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
 
     .panel-box {
         background: #f8fafc;
@@ -81,9 +70,9 @@
         box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
     }
 
-        .panel-box h3 {
-            margin-bottom: 18px;
-        }
+    .panel-box h3 {
+        margin-bottom: 18px;
+    }
 
     .empty-state {
         padding: 18px;
@@ -106,11 +95,11 @@
         border-left: 2px dashed #c7d2de;
     }
 
-        .group.root {
-            margin-left: 0;
-            padding-left: 0;
-            border-left: none;
-        }
+    .group.root {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+    }
 
     .group-card {
         background: #fff;
@@ -164,17 +153,13 @@
         align-items: center;
     }
 
-        .group-toolbar form {
-            margin: 0;
-        }
-
     .group-operation-row {
         margin-bottom: 14px;
     }
 
-        .group-operation-row select {
-            max-width: 220px;
-        }
+    .group-operation-row select {
+        max-width: 220px;
+    }
 
     .elements-wrap {
         display: flex;
@@ -217,11 +202,11 @@
         margin-top: 12px;
     }
 
-        .preview-node.root {
-            margin-left: 0;
-            padding-left: 0;
-            border-left: none;
-        }
+    .preview-node.root {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+    }
 
     .preview-card {
         background: #fff;
@@ -261,7 +246,6 @@
         justify-content: flex-end;
     }
 
-    /* custom subject picker */
     .subject-picker {
         position: relative;
     }
@@ -301,9 +285,9 @@
         overflow: hidden;
     }
 
-        .subject-dropdown.open {
-            display: block;
-        }
+    .subject-dropdown.open {
+        display: block;
+    }
 
     .subject-search-wrap {
         padding: 10px;
@@ -330,17 +314,115 @@
         border-bottom: 1px solid #f1f5f9;
     }
 
-        .subject-option:hover,
-        .subject-option.active {
-            background: #eef6ff;
-        }
+    .subject-option:hover,
+    .subject-option.active {
+        background: #eef6ff;
+    }
 
-        .subject-option.hidden {
-            display: none;
-        }
+    .subject-option.hidden {
+        display: none;
+    }
+
+    .test-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+        padding: 24px;
+    }
+
+    .test-modal-backdrop.open {
+        display: flex;
+    }
+
+    .test-modal {
+        width: min(1100px, 100%);
+        max-height: 90vh;
+        overflow: auto;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+        border: 1px solid #dbe4ee;
+    }
+
+    .test-modal-header,
+    .test-modal-footer {
+        padding: 18px 22px;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .test-modal-footer {
+        border-top: 1px solid #eef2f7;
+        border-bottom: none;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .test-modal-body {
+        padding: 22px;
+    }
+
+    .test-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .test-row {
+        display: grid;
+        grid-template-columns: minmax(420px, 1fr) 140px 140px;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .test-result {
+        border: 1px solid #dbe4ee;
+        border-radius: 14px;
+        background: #f8fafc;
+        padding: 16px;
+    }
+
+    .test-score {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    .test-lines {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .toast-box {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 5000;
+        background: #198754;
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        display: none;
+    }
+
+    .toast-box.show {
+        display: block;
+    }
 
     @@media (max-width: 992px) {
-        .element-row {
+        .element-row,
+        .test-row {
             grid-template-columns: 1fr;
         }
 
@@ -362,11 +444,11 @@
         </div>
 
         <div class="alg-actions">
-            <form asp-action="AddGroupInline" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="algorytmMaturaId" value="@Model.AlgorytmMaturaId" />
-                <button class="btn btn-primary">Dodaj grupę główną</button>
-            </form>
+            <button type="button"
+                    class="btn btn-primary"
+                    onclick="addGroup(@Model.AlgorytmMaturaId, null, window.currentAlgorytmId, window.currentMaturaId)">
+                Dodaj grupę główną
+            </button>
 
             <a asp-action="Index" class="btn btn-secondary">Powrót</a>
         </div>
@@ -386,135 +468,79 @@
         }
     </div>
 
-    <div class="panel-box">
-        <h3>Podgląd</h3>
-
-        @if (!rootGroups.Any())
-        {
-            <div class="empty-state">
-                Brak grup dla wybranej matury.
-            </div>
-        }
-        else
-        {
-            @foreach (var root in rootGroups)
-            {
-                @await Html.PartialAsync("_AlgorytmPreviewNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
-                {
-                    CurrentGroup = root,
-                AllGroups = Model.Groups,
-                AllElements = Model.Elements,
-                Operacje = Model.Operacje,
-                PrzedmiotOpcje = Model.PrzedmiotOpcje,
-                AlgorytmId = Model.Algorytm.IdAlgorytm,
-                AlgorytmMaturaId = Model.AlgorytmMaturaId,
-                IsRoot = true,
-                GroupNumbers = groupNumbers
-                })
-                }
-        }
-    </div>
-
-    <div class="sticky-save">
-        <button type="button" class="btn btn-success btn-lg" onclick="saveAlgorithm(@Model.Algorytm.IdAlgorytm, @Model.SelectedMaturaId)">
-            Zapisz algorytm
-        </button>
-    </div>
-
-    <div class="panel-box">
-        <h3>Edytor</h3>
-
-        @if (!rootGroups.Any())
-        {
-            <div class="empty-state">
-                Kliknij „Dodaj grupę główną”, aby rozpocząć budowę algorytmu.
-            </div>
-        }
-        else
-        {
-            <div class="tree">
-                @foreach (var root in rootGroups)
-                {
-                    @await Html.PartialAsync("_AlgorytmEditorNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
-                    {
-                        CurrentGroup = root,
-                        AllGroups = Model.Groups,
-                        AllElements = Model.Elements,
-                        Operacje = Model.Operacje,
-                        PrzedmiotOpcje = Model.PrzedmiotOpcje,
-                        AlgorytmId = Model.Algorytm.IdAlgorytm,
-                        AlgorytmMaturaId = Model.AlgorytmMaturaId,
-                        IsRoot = true,
-                        GroupNumbers = groupNumbers
-                        })
-                        }
-            </div>
-        }
+    <div id="algorytm-workspace">
+        @await Html.PartialAsync("_AlgorytmWorkspace", Model)
     </div>
 </div>
 
+<div id="testModalBackdrop" class="test-modal-backdrop">
+    <div class="test-modal">
+        <div class="test-modal-header d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="mb-1">Testuj algorytm</h3>
+                <div class="text-muted">Wpisz tymczasowe wyniki testowego kandydata i sprawdź najlepszą ścieżkę.</div>
+            </div>
+            <button type="button" class="btn btn-outline-secondary" onclick="closeTestModal()">Zamknij</button>
+        </div>
+
+        <div class="test-modal-body">
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-outline-primary" onclick="addTestRow()">+ dodaj przedmiot</button>
+            </div>
+
+            <div id="testRows" class="test-rows"></div>
+
+            <div id="testResult" class="test-result d-none">
+                <div id="testScore" class="test-score"></div>
+                <ul id="testLines" class="test-lines"></ul>
+            </div>
+        </div>
+
+        <div class="test-modal-footer">
+            <div></div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary" onclick="runAlgorithmTest()">Przelicz punkty</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="saveToast" class="toast-box">Zapisano algorytm.</div>
+
 <script>
-    function saveAlgorithm(algorytmId, maturaId) {
+    window.currentMaturaId = @Model.SelectedMaturaId;
+    window.currentAlgorytmId = @Model.Algorytm.IdAlgorytm;
+
+    window.subjectOptionsData = @Html.Raw(JsonSerializer.Serialize(
+        Model.PrzedmiotOpcje.Select(p => new {
+            value = p.IdPrzedmiotRodzajPoziom,
+            label = $"{p.Przedmiot!.Nazwa} / {p.PrzedmiotRodzaj!.Nazwa} / {p.PrzedmiotPoziom!.Nazwa}"
+        })
+    ));
+
+    function getAntiForgeryToken() {
         const tokenInput = document.querySelector('#antiForgeryHolder input[name="__RequestVerificationToken"]');
-        const token = tokenInput ? tokenInput.value : '';
+        return tokenInput ? tokenInput.value : '';
+    }
 
-        const form = document.createElement('form');
-        form.method = 'post';
-        form.action = '/Algorytmy/SaveAll';
-
-        const tokenField = document.createElement('input');
-        tokenField.type = 'hidden';
-        tokenField.name = '__RequestVerificationToken';
-        tokenField.value = token;
-        form.appendChild(tokenField);
-
-        const algField = document.createElement('input');
-        algField.type = 'hidden';
-        algField.name = 'algorytmId';
-        algField.value = algorytmId;
-        form.appendChild(algField);
-
-        const matField = document.createElement('input');
-        matField.type = 'hidden';
-        matField.name = 'maturaId';
-        matField.value = maturaId;
-        form.appendChild(matField);
-
-        const rows = document.querySelectorAll('.js-element-row');
-        rows.forEach(row => {
-            const elementId = row.dataset.elementId;
-            const subjectId = row.querySelector('.js-subject-value').value;
-            const multiplier = row.querySelector('.js-multiplier').value;
-
-            const elId = document.createElement('input');
-            elId.type = 'hidden';
-            elId.name = 'elementIds';
-            elId.value = elementId;
-            form.appendChild(elId);
-
-            const subj = document.createElement('input');
-            subj.type = 'hidden';
-            subj.name = 'przedmiotRodzajPoziomIds';
-            subj.value = subjectId;
-            form.appendChild(subj);
-
-            const mul = document.createElement('input');
-            mul.type = 'hidden';
-            mul.name = 'liczby';
-            mul.value = multiplier;
-            form.appendChild(mul);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
+    async function reloadWorkspace(algorytmId, maturaId) {
+        const response = await fetch(`/Algorytmy/EditorContent?id=${algorytmId}&maturaId=${maturaId}`);
+        const html = await response.text();
+        document.getElementById('algorytm-workspace').innerHTML = html;
+        initSubjectPickers(document);
     }
 
     function closeAllSubjectDropdowns() {
         document.querySelectorAll('.subject-dropdown.open').forEach(d => d.classList.remove('open'));
     }
 
-    function initSubjectPickers() {
-        document.querySelectorAll('.subject-picker').forEach(picker => {
+    function initSubjectPickers(root) {
+        const scope = root || document;
+
+        scope.querySelectorAll('.subject-picker').forEach(picker => {
+            if (picker.dataset.initialized === '1') return;
+            picker.dataset.initialized = '1';
+
             const trigger = picker.querySelector('.subject-trigger');
             const dropdown = picker.querySelector('.subject-dropdown');
             const search = picker.querySelector('.subject-search-input');
@@ -540,6 +566,8 @@
                 option.addEventListener('click', function () {
                     hidden.value = this.dataset.value;
                     label.textContent = this.dataset.label;
+                    options.forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
                     dropdown.classList.remove('open');
                 });
             });
@@ -564,7 +592,231 @@
         });
     }
 
+    async function postFormUrlEncoded(url, payload) {
+        const token = getAntiForgeryToken();
+        const body = new URLSearchParams();
+        body.append('__RequestVerificationToken', token);
+
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === null || payload[key] === undefined || payload[key] === '') return;
+            body.append(key, payload[key]);
+        });
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: body.toString()
+        });
+
+        return response.json();
+    }
+
+    async function addGroup(algorytmMaturaId, rodzicId, algorytmId, maturaId) {
+        const result = await postFormUrlEncoded('/Algorytmy/AddGroupInlineAjax', {
+            algorytmMaturaId: algorytmMaturaId,
+            rodzicId: rodzicId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        }
+    }
+
+    async function addElement(groupId, algorytmId, maturaId) {
+        const result = await postFormUrlEncoded('/Algorytmy/AddElementInlineAjax', {
+            groupId: groupId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        }
+    }
+
+    async function deleteElement(elementId, algorytmId, maturaId) {
+        if (!confirm('Usunąć element?')) return;
+
+        const result = await postFormUrlEncoded('/Algorytmy/DeleteElementAjax', {
+            elementId: elementId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        }
+    }
+
+    async function deleteGroup(groupId, algorytmId, maturaId) {
+        if (!confirm('Usunąć grupę wraz z podgrupami?')) return;
+
+        const result = await postFormUrlEncoded('/Algorytmy/DeleteGroupAjax', {
+            groupId: groupId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        }
+    }
+
+    async function saveAlgorithm(algorytmId, maturaId) {
+        const groupIds = [];
+        const operationIds = [];
+
+        document.querySelectorAll('.js-group-op').forEach(el => {
+            groupIds.push(parseInt(el.dataset.groupId));
+            operationIds.push(parseInt(el.value));
+        });
+
+        const elementIds = [];
+        const przedmiotRodzajPoziomIds = [];
+        const liczby = [];
+
+        document.querySelectorAll('.js-element-row').forEach(row => {
+            elementIds.push(parseInt(row.dataset.elementId));
+            przedmiotRodzajPoziomIds.push(parseInt(row.querySelector('.js-subject-value').value));
+            liczby.push(parseFloat(row.querySelector('.js-multiplier').value || '0'));
+        });
+
+        const response = await fetch('/Algorytmy/SaveAllAjax', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({
+                algorytmId,
+                maturaId,
+                groupIds,
+                operationIds,
+                elementIds,
+                przedmiotRodzajPoziomIds,
+                liczby
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+            showToast('Zapisano algorytm.');
+        }
+    }
+
+    function showToast(text) {
+        const toast = document.getElementById('saveToast');
+        toast.textContent = text;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function buildSubjectPickerHtml(selectedValue) {
+        const found = window.subjectOptionsData.find(x => x.value === selectedValue) || window.subjectOptionsData[0];
+        const optionsHtml = window.subjectOptionsData.map(opt =>
+            `<div class="subject-option ${opt.value === found.value ? 'active' : ''}" data-value="${opt.value}" data-label="${opt.label}">${opt.label}</div>`
+        ).join('');
+
+        return `
+            <div class="subject-picker">
+                <input type="hidden" class="js-subject-value" value="${found.value}" />
+                <button type="button" class="subject-trigger">
+                    <span class="subject-trigger-label">${found.label}</span>
+                    <span>▾</span>
+                </button>
+                <div class="subject-dropdown">
+                    <div class="subject-search-wrap">
+                        <input type="text" class="subject-search-input" placeholder="Szukaj przedmiotu..." />
+                    </div>
+                    <div class="subject-options">
+                        ${optionsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function openTestModal() {
+        const modal = document.getElementById('testModalBackdrop');
+        modal.classList.add('open');
+
+        const rows = document.getElementById('testRows');
+        rows.innerHTML = '';
+
+        addTestRow();
+        initSubjectPickers(modal);
+
+        document.getElementById('testResult').classList.add('d-none');
+        document.getElementById('testLines').innerHTML = '';
+        document.getElementById('testScore').textContent = '';
+    }
+
+    function closeTestModal() {
+        document.getElementById('testModalBackdrop').classList.remove('open');
+    }
+
+    function addTestRow() {
+        const rows = document.getElementById('testRows');
+        const defaultValue = window.subjectOptionsData.length ? window.subjectOptionsData[0].value : 0;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'test-row js-test-row';
+        wrapper.innerHTML = `
+            ${buildSubjectPickerHtml(defaultValue)}
+            <input type="number" step="0.01" class="form-control js-test-points" placeholder="Punkty" />
+            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.js-test-row').remove()">Usuń</button>
+        `;
+
+        rows.appendChild(wrapper);
+        initSubjectPickers(wrapper);
+    }
+
+    async function runAlgorithmTest() {
+        const rows = document.querySelectorAll('.js-test-row');
+
+        const inputs = [];
+        rows.forEach(row => {
+            const subjectId = parseInt(row.querySelector('.js-subject-value').value);
+            const points = parseFloat(row.querySelector('.js-test-points').value || '0');
+
+            if (!isNaN(subjectId)) {
+                inputs.push({
+                    przedmiotRodzajPoziomId: subjectId,
+                    punkty: points
+                });
+            }
+        });
+
+        const response = await fetch('/Algorytmy/TestAlgorithm', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                algorytmId: window.currentAlgorytmId,
+                maturaId: window.currentMaturaId,
+                inputs: inputs
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) return;
+
+        const resultBox = document.getElementById('testResult');
+        const score = document.getElementById('testScore');
+        const lines = document.getElementById('testLines');
+
+        score.textContent = `Wynik testowego kandydata: ${result.points}`;
+
+        lines.innerHTML = '';
+        (result.lines || []).forEach(line => {
+            const li = document.createElement('li');
+            li.textContent = line;
+            lines.appendChild(li);
+        });
+
+        resultBox.classList.remove('d-none');
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        initSubjectPickers();
+        initSubjectPickers(document);
     });
 </script>
