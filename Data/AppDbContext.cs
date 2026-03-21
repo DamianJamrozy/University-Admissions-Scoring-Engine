@@ -5,28 +5,34 @@ namespace University_Admissions_Scoring_Engine.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
         {
         }
 
-        public DbSet<Matura> Matury => Set<Matura>();
-        public DbSet<Przedmiot> Przedmioty => Set<Przedmiot>();
-        public DbSet<PrzedmiotRodzaj> PrzedmiotRodzaje => Set<PrzedmiotRodzaj>();
-        public DbSet<PrzedmiotPoziom> PrzedmiotPoziomy => Set<PrzedmiotPoziom>();
-        public DbSet<PrzedmiotRodzajPoziom> PrzedmiotRodzajPoziomy => Set<PrzedmiotRodzajPoziom>();
-        public DbSet<MaturaPrzedmiot> MaturaPrzedmioty => Set<MaturaPrzedmiot>();
-        public DbSet<KierunekRodzaj> KierunekRodzaje => Set<KierunekRodzaj>();
-        public DbSet<KierunekTryb> KierunekTryby => Set<KierunekTryb>();
-        public DbSet<Kierunek> Kierunki => Set<Kierunek>();
-        public DbSet<Algorytm> Algorytmy => Set<Algorytm>();
-        public DbSet<AlgorytmOperacja> AlgorytmOperacje => Set<AlgorytmOperacja>();
-        public DbSet<AlgorytmGrupa> AlgorytmGrupy => Set<AlgorytmGrupa>();
-        public DbSet<AlgorytmLicz> AlgorytmLicze => Set<AlgorytmLicz>();
-        public DbSet<Kandydat> Kandydaci => Set<Kandydat>();
-        public DbSet<KandydatDyplom> KandydatDyplomy => Set<KandydatDyplom>();
-        public DbSet<KandydatDyplomPrzedmiot> KandydatDyplomPrzedmioty => Set<KandydatDyplomPrzedmiot>();
-        public DbSet<KandydatKierunek> KandydatKierunki => Set<KandydatKierunek>();
-        public DbSet<Status> Statusy => Set<Status>();
+        public DbSet<Matura> Matury { get; set; }
+        public DbSet<Przedmiot> Przedmioty { get; set; }
+        public DbSet<PrzedmiotRodzaj> PrzedmiotRodzaje { get; set; }
+        public DbSet<PrzedmiotPoziom> PrzedmiotPoziomy { get; set; }
+        public DbSet<PrzedmiotRodzajPoziom> PrzedmiotRodzajPoziomy { get; set; }
+        public DbSet<MaturaPrzedmiot> MaturaPrzedmioty { get; set; }
+
+        public DbSet<Kierunek> Kierunki { get; set; }
+        public DbSet<KierunekRodzaj> KierunekRodzaje { get; set; }
+        public DbSet<KierunekTryb> KierunekTryby { get; set; }
+
+        public DbSet<Algorytm> Algorytmy { get; set; }
+        public DbSet<AlgorytmMatura> AlgorytmyMatur { get; set; }
+        public DbSet<AlgorytmGrupa> AlgorytmGrupy { get; set; }
+        public DbSet<AlgorytmOperacja> AlgorytmOperacje { get; set; }
+        public DbSet<AlgorytmLicz> AlgorytmLicze { get; set; }
+
+        public DbSet<Kandydat> Kandydaci { get; set; }
+        public DbSet<KandydatDyplom> KandydatDyplomy { get; set; }
+        public DbSet<KandydatDyplomPrzedmiot> KandydatDyplomPrzedmioty { get; set; }
+        public DbSet<KandydatKierunek> KandydatKierunki { get; set; }
+
+        public DbSet<Status> Statusy { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -56,9 +62,13 @@ namespace University_Admissions_Scoring_Engine.Data
                 .HasIndex(x => x.Numer)
                 .IsUnique();
 
+            modelBuilder.Entity<AlgorytmMatura>()
+                .HasIndex(x => new { x.AlgorytmId, x.MaturaId })
+                .IsUnique();
+
             modelBuilder.Entity<AlgorytmGrupa>()
                 .HasOne(x => x.Rodzic)
-                .WithMany(x => x.Dzieci)
+                .WithMany()
                 .HasForeignKey(x => x.RodzicId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -76,7 +86,7 @@ namespace University_Admissions_Scoring_Engine.Data
 
             modelBuilder.Entity<Kierunek>()
                 .HasOne(x => x.Algorytm)
-                .WithMany(x => x.Kierunki)
+                .WithMany()
                 .HasForeignKey(x => x.AlgorytmId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -110,21 +120,33 @@ namespace University_Admissions_Scoring_Engine.Data
                 .HasForeignKey(x => x.PrzedmiotPoziomId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<AlgorytmGrupa>()
+            modelBuilder.Entity<AlgorytmMatura>()
                 .HasOne(x => x.Algorytm)
-                .WithMany(x => x.AlgorytmGrupy)
+                .WithMany(x => x.AlgorytmyMatur)
                 .HasForeignKey(x => x.AlgorytmId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AlgorytmMatura>()
+                .HasOne(x => x.Matura)
+                .WithMany()
+                .HasForeignKey(x => x.MaturaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AlgorytmGrupa>()
+                .HasOne(x => x.AlgorytmMatura)
+                .WithMany(x => x.Grupy)
+                .HasForeignKey(x => x.AlgorytmMaturaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AlgorytmGrupa>()
                 .HasOne(x => x.AlgorytmOperacja)
-                .WithMany(x => x.AlgorytmGrupy)
+                .WithMany()
                 .HasForeignKey(x => x.AlgorytmOperacjaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<AlgorytmLicz>()
                 .HasOne(x => x.AlgorytmGrupa)
-                .WithMany(x => x.AlgorytmLicze)
+                .WithMany(x => x.Elementy)
                 .HasForeignKey(x => x.AlgorytmGrupaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -168,7 +190,7 @@ namespace University_Admissions_Scoring_Engine.Data
                 .HasOne(x => x.Kierunek)
                 .WithMany(x => x.KandydatKierunki)
                 .HasForeignKey(x => x.KierunekId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<KandydatKierunek>()
                 .HasOne(x => x.Status)
@@ -186,6 +208,7 @@ namespace University_Admissions_Scoring_Engine.Data
             modelBuilder.Entity<KierunekTryb>().ToTable("KierunekTryb");
             modelBuilder.Entity<Kierunek>().ToTable("Kierunek");
             modelBuilder.Entity<Algorytm>().ToTable("Algorytm");
+            modelBuilder.Entity<AlgorytmMatura>().ToTable("AlgorytmMatura");
             modelBuilder.Entity<AlgorytmOperacja>().ToTable("AlgorytmOperacja");
             modelBuilder.Entity<AlgorytmGrupa>().ToTable("AlgorytmGrupa");
             modelBuilder.Entity<AlgorytmLicz>().ToTable("AlgorytmLicz");

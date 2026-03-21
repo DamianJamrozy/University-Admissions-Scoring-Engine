@@ -31,8 +31,7 @@ namespace University_Admissions_Scoring_Engine.Migrations
 
                     b.Property<string>("Nazwa")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdAlgorytm");
 
@@ -47,10 +46,13 @@ namespace University_Admissions_Scoring_Engine.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdAlgorytmGrupa"));
 
-                    b.Property<int>("AlgorytmId")
+                    b.Property<int>("AlgorytmMaturaId")
                         .HasColumnType("int");
 
                     b.Property<int>("AlgorytmOperacjaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AlgorytmOperacjaIdAlgorytmOperacja")
                         .HasColumnType("int");
 
                     b.Property<int?>("RodzicId")
@@ -58,9 +60,11 @@ namespace University_Admissions_Scoring_Engine.Migrations
 
                     b.HasKey("IdAlgorytmGrupa");
 
-                    b.HasIndex("AlgorytmId");
+                    b.HasIndex("AlgorytmMaturaId");
 
                     b.HasIndex("AlgorytmOperacjaId");
+
+                    b.HasIndex("AlgorytmOperacjaIdAlgorytmOperacja");
 
                     b.HasIndex("RodzicId");
 
@@ -91,6 +95,30 @@ namespace University_Admissions_Scoring_Engine.Migrations
                     b.HasIndex("PrzedmiotRodzajPoziomId");
 
                     b.ToTable("AlgorytmLicz", (string)null);
+                });
+
+            modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.AlgorytmMatura", b =>
+                {
+                    b.Property<int>("IdAlgorytmMatura")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdAlgorytmMatura"));
+
+                    b.Property<int>("AlgorytmId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaturaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdAlgorytmMatura");
+
+                    b.HasIndex("MaturaId");
+
+                    b.HasIndex("AlgorytmId", "MaturaId")
+                        .IsUnique();
+
+                    b.ToTable("AlgorytmMatura", (string)null);
                 });
 
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.AlgorytmOperacja", b =>
@@ -474,24 +502,28 @@ namespace University_Admissions_Scoring_Engine.Migrations
 
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.AlgorytmGrupa", b =>
                 {
-                    b.HasOne("University_Admissions_Scoring_Engine.Models.Algorytm", "Algorytm")
-                        .WithMany("AlgorytmGrupy")
-                        .HasForeignKey("AlgorytmId")
+                    b.HasOne("University_Admissions_Scoring_Engine.Models.AlgorytmMatura", "AlgorytmMatura")
+                        .WithMany("Grupy")
+                        .HasForeignKey("AlgorytmMaturaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("University_Admissions_Scoring_Engine.Models.AlgorytmOperacja", "AlgorytmOperacja")
-                        .WithMany("AlgorytmGrupy")
+                        .WithMany()
                         .HasForeignKey("AlgorytmOperacjaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("University_Admissions_Scoring_Engine.Models.AlgorytmOperacja", null)
+                        .WithMany("AlgorytmGrupy")
+                        .HasForeignKey("AlgorytmOperacjaIdAlgorytmOperacja");
+
                     b.HasOne("University_Admissions_Scoring_Engine.Models.AlgorytmGrupa", "Rodzic")
-                        .WithMany("Dzieci")
+                        .WithMany()
                         .HasForeignKey("RodzicId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Algorytm");
+                    b.Navigation("AlgorytmMatura");
 
                     b.Navigation("AlgorytmOperacja");
 
@@ -501,7 +533,7 @@ namespace University_Admissions_Scoring_Engine.Migrations
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.AlgorytmLicz", b =>
                 {
                     b.HasOne("University_Admissions_Scoring_Engine.Models.AlgorytmGrupa", "AlgorytmGrupa")
-                        .WithMany("AlgorytmLicze")
+                        .WithMany("Elementy")
                         .HasForeignKey("AlgorytmGrupaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -515,6 +547,25 @@ namespace University_Admissions_Scoring_Engine.Migrations
                     b.Navigation("AlgorytmGrupa");
 
                     b.Navigation("PrzedmiotRodzajPoziom");
+                });
+
+            modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.AlgorytmMatura", b =>
+                {
+                    b.HasOne("University_Admissions_Scoring_Engine.Models.Algorytm", "Algorytm")
+                        .WithMany("AlgorytmyMatur")
+                        .HasForeignKey("AlgorytmId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("University_Admissions_Scoring_Engine.Models.Matura", "Matura")
+                        .WithMany()
+                        .HasForeignKey("MaturaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Algorytm");
+
+                    b.Navigation("Matura");
                 });
 
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.KandydatDyplom", b =>
@@ -566,7 +617,7 @@ namespace University_Admissions_Scoring_Engine.Migrations
                     b.HasOne("University_Admissions_Scoring_Engine.Models.Kierunek", "Kierunek")
                         .WithMany("KandydatKierunki")
                         .HasForeignKey("KierunekId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("University_Admissions_Scoring_Engine.Models.Status", "Status")
@@ -584,7 +635,7 @@ namespace University_Admissions_Scoring_Engine.Migrations
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.Kierunek", b =>
                 {
                     b.HasOne("University_Admissions_Scoring_Engine.Models.Algorytm", "Algorytm")
-                        .WithMany("Kierunki")
+                        .WithMany()
                         .HasForeignKey("AlgorytmId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -656,16 +707,17 @@ namespace University_Admissions_Scoring_Engine.Migrations
 
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.Algorytm", b =>
                 {
-                    b.Navigation("AlgorytmGrupy");
-
-                    b.Navigation("Kierunki");
+                    b.Navigation("AlgorytmyMatur");
                 });
 
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.AlgorytmGrupa", b =>
                 {
-                    b.Navigation("AlgorytmLicze");
+                    b.Navigation("Elementy");
+                });
 
-                    b.Navigation("Dzieci");
+            modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.AlgorytmMatura", b =>
+                {
+                    b.Navigation("Grupy");
                 });
 
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.AlgorytmOperacja", b =>

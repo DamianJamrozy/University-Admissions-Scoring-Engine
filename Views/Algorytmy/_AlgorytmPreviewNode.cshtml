@@ -1,0 +1,69 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+
+@{
+    var children = Model.AllGroups
+        .Where(x => x.RodzicId == Model.CurrentGroup.IdAlgorytmGrupa)
+        .OrderBy(x => x.IdAlgorytmGrupa)
+        .ToList();
+
+    var elements = Model.AllElements
+        .Where(x => x.AlgorytmGrupaId == Model.CurrentGroup.IdAlgorytmGrupa)
+        .ToList();
+
+    var currentNo = Model.GroupNumbers[Model.CurrentGroup.IdAlgorytmGrupa];
+    int? parentNo = null;
+
+    if (Model.CurrentGroup.RodzicId.HasValue && Model.GroupNumbers.ContainsKey(Model.CurrentGroup.RodzicId.Value))
+    {
+        parentNo = Model.GroupNumbers[Model.CurrentGroup.RodzicId.Value];
+    }
+
+    var cssClass = Model.IsRoot ? "preview-node root" : "preview-node";
+}
+
+<div class="@cssClass">
+    <div class="preview-card">
+        <div class="preview-head">
+            <span class="group-op-badge">@Model.CurrentGroup.AlgorytmOperacja?.Nazwa</span>
+            <span class="group-number">Grupa @currentNo</span>
+
+            @if (parentNo != null)
+            {
+                <span class="group-parent">| rodzic: grupa @parentNo</span>
+            }
+        </div>
+
+        @if (elements.Any())
+        {
+            <div class="preview-elements">
+                @foreach (var e in elements)
+                {
+                    <div class="preview-element">
+                        <strong>@e.PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa</strong>
+                        —
+                        @e.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa /
+                        @e.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa
+                        —
+                        mnożnik: <strong>@e.Liczba</strong>
+                    </div>
+                }
+            </div>
+        }
+
+        @foreach (var child in children)
+        {
+            @await Html.PartialAsync("_AlgorytmPreviewNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+            {
+                CurrentGroup = child,
+                AllGroups = Model.AllGroups,
+                AllElements = Model.AllElements,
+                Operacje = Model.Operacje,
+                PrzedmiotOpcje = Model.PrzedmiotOpcje,
+                AlgorytmId = Model.AlgorytmId,
+                AlgorytmMaturaId = Model.AlgorytmMaturaId,
+                IsRoot = false,
+                GroupNumbers = Model.GroupNumbers
+                })
+                }
+    </div>
+</div>

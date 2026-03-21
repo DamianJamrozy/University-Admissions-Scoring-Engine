@@ -1,27 +1,49 @@
-﻿@model List<University_Admissions_Scoring_Engine.Models.Kierunek>
+﻿@model List<University_Admissions_Scoring_Engine.Models.Algorytm>
 
-<h1>Liczenie punktów</h1>
+<h1>Algorytmy</h1>
 
-<table class="table table-bordered">
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Dodaj algorytm</a>
+</p>
+
+<table class="table table-bordered align-middle">
     <thead>
         <tr>
+            <th>ID</th>
             <th>Nazwa</th>
-            <th>Tryb</th>
-            <th>Rodzaj</th>
-            <th>Algorytm</th>
-            <th></th>
+            <th style="width: 260px;"></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var k in Model)
+        @foreach (var item in Model)
         {
             <tr>
-                <td>@k.Nazwa</td>
-                <td>@k.Tryb?.Nazwa</td>
-                <td>@k.Rodzaj?.Nazwa</td>
-                <td>@k.Algorytm?.Nazwa</td>
+                <td>@item.IdAlgorytm</td>
+                <td>@item.Nazwa</td>
                 <td>
-                    <a asp-action="Kierunek" asp-route-id="@k.IdKierunek" class="btn btn-sm btn-primary">Otwórz</a>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Details"
+                           asp-route-id="@item.IdAlgorytm"
+                           class="btn btn-sm btn-secondary">
+                            Szczegóły
+                        </a>
+
+                        <form asp-action="Delete" method="post" onsubmit="return confirm('Usunąć cały algorytm?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.IdAlgorytm" />
+                            <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         }

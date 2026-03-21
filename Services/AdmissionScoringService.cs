@@ -13,18 +13,10 @@ namespace University_Admissions_Scoring_Engine.Services
             _context = context;
         }
 
-        // =========================
-        // PUBLIC API
-        // =========================
-
         public async Task CalculateForKierunekAsync(int kierunekId)
         {
-            var kierunek = await _context.Kierunki
-                .Include(k => k.Algorytm)
-                .FirstAsync(k => k.IdKierunek == kierunekId);
-
             var kandydaci = await _context.KandydatKierunki
-                .Where(k => k.KierunekId == kierunekId)
+                .Where(x => x.KierunekId == kierunekId)
                 .ToListAsync();
 
             foreach (var kk in kandydaci)
@@ -34,48 +26,55 @@ namespace University_Admissions_Scoring_Engine.Services
             }
 
             await _context.SaveChangesAsync();
-
             await CalculateRankingAsync(kierunekId);
         }
 
         public async Task<decimal> CalculateForKandydatAsync(int kandydatId, int kierunekId)
         {
             var kierunek = await _context.Kierunki
-                .Include(k => k.Algorytm)
                 .FirstAsync(k => k.IdKierunek == kierunekId);
 
-            var algorytm = await _context.Algorytmy
-                .Include(a => a.AlgorytmGrupy)
-                .FirstAsync(a => a.IdAlgorytm == kierunek.AlgorytmId);
+            var dyplom = await _context.KandydatDyplomy
+                .Where(d => d.KandydatId == kandydatId)
+                .OrderByDescending(d => d.Rok)
+                .FirstAsync();
 
-            var wyniki = await GetWynikiKandydata(kandydatId);
+            var algorytmMatura = await _context.AlgorytmyMatur
+                .FirstAsync(a =>
+                    a.AlgorytmId == kierunek.AlgorytmId &&
+                    a.MaturaId == dyplom.MaturaId);
 
-            var rootGroups = await _context.AlgorytmGrupy
-                .Where(g => g.AlgorytmId == algorytm.IdAlgorytm && g.RodzicId == null)
-                .Include(g => g.AlgorytmOperacja)
+            var wyniki = await _context.KandydatDyplomPrzedmioty
+                .Where(w => w.KandydatDyplomId == dyplom.IdKandydatDyplom)
                 .ToListAsync();
 
-            decimal wynik = 0;
+            var dict = wyniki.ToDictionary(
+                x => x.PrzedmiotRodzajPoziomId,
+                x => x.Punkty
+            );
+
+            var rootGroups = await _context.AlgorytmGrupy
+                .Include(g => g.AlgorytmOperacja)
+                .Where(g => g.AlgorytmMaturaId == algorytmMatura.IdAlgorytmMatura && g.RodzicId == null)
+                .ToListAsync();
+
+            decimal wynik = 0m;
 
             foreach (var group in rootGroups)
             {
-                wynik += await EvaluateGroup(group, wyniki);
+                wynik += await EvaluateGroup(group, dict);
             }
 
             return wynik;
         }
 
-        // =========================
-        // REKURENCJA ALGORYTMU
-        // =========================
-
         private async Task<decimal> EvaluateGroup(AlgorytmGrupa group, Dictionary<int, decimal> wyniki)
         {
-            var operation = group.AlgorytmOperacja!.Nazwa;
+            var operation = group.AlgorytmOperacja?.Nazwa ?? string.Empty;
 
             var dzieci = await _context.AlgorytmGrupy
-                .Where(g => g.RodzicId == group.IdAlgorytmGrupa)
                 .Include(g => g.AlgorytmOperacja)
+                .Where(g => g.RodzicId == group.IdAlgorytmGrupa)
                 .ToListAsync();
 
             var elementy = await _context.AlgorytmLicze
@@ -84,7 +83,6 @@ namespace University_Admissions_Scoring_Engine.Services
 
             var values = new List<decimal>();
 
-            // przedmioty
             foreach (var el in elementy)
             {
                 if (wyniki.TryGetValue(el.PrzedmiotRodzajPoziomId, out var val))
@@ -93,15 +91,13 @@ namespace University_Admissions_Scoring_Engine.Services
                 }
             }
 
-            // podgrupy
             foreach (var child in dzieci)
             {
-                var val = await EvaluateGroup(child, wyniki);
-                values.Add(val);
+                values.Add(await EvaluateGroup(child, wyniki));
             }
 
             if (!values.Any())
-                return 0;
+                return 0m;
 
             if (operation == "SUMA")
                 return values.Sum();
@@ -109,33 +105,8 @@ namespace University_Admissions_Scoring_Engine.Services
             if (operation == "LUB")
                 return values.Max();
 
-            return 0;
+            return 0m;
         }
-
-        // =========================
-        // WYNIKI KANDYDATA
-        // =========================
-
-        private async Task<Dictionary<int, decimal>> GetWynikiKandydata(int kandydatId)
-        {
-            var dyplom = await _context.KandydatDyplomy
-                .Where(d => d.KandydatId == kandydatId)
-                .OrderByDescending(d => d.Rok)
-                .FirstAsync();
-
-            var wyniki = await _context.KandydatDyplomPrzedmioty
-                .Where(w => w.KandydatDyplomId == dyplom.IdKandydatDyplom)
-                .ToListAsync();
-
-            return wyniki.ToDictionary(
-                x => x.PrzedmiotRodzajPoziomId,
-                x => x.Punkty
-            );
-        }
-
-        // =========================
-        // RANKING + STATUSY
-        // =========================
 
         private async Task CalculateRankingAsync(int kierunekId)
         {
@@ -144,7 +115,8 @@ namespace University_Admissions_Scoring_Engine.Services
                 .OrderByDescending(k => k.Punkty)
                 .ToListAsync();
 
-            var kierunek = await _context.Kierunki.FirstAsync(k => k.IdKierunek == kierunekId);
+            var kierunek = await _context.Kierunki
+                .FirstAsync(k => k.IdKierunek == kierunekId);
 
             var statusy = await _context.Statusy.ToListAsync();
 
@@ -155,7 +127,6 @@ namespace University_Admissions_Scoring_Engine.Services
             for (int i = 0; i < lista.Count; i++)
             {
                 var item = lista[i];
-
                 item.Ranking = i + 1;
 
                 if (i < kierunek.MaxPrzyjetych)

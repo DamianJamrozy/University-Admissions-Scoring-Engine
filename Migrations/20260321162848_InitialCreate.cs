@@ -16,7 +16,7 @@ namespace University_Admissions_Scoring_Engine.Migrations
                 {
                     IdAlgorytm = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Nazwa = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false)
+                    Nazwa = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -147,39 +147,6 @@ namespace University_Admissions_Scoring_Engine.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AlgorytmGrupa",
-                columns: table => new
-                {
-                    IdAlgorytmGrupa = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AlgorytmId = table.Column<int>(type: "int", nullable: false),
-                    AlgorytmOperacjaId = table.Column<int>(type: "int", nullable: false),
-                    RodzicId = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AlgorytmGrupa", x => x.IdAlgorytmGrupa);
-                    table.ForeignKey(
-                        name: "FK_AlgorytmGrupa_AlgorytmGrupa_RodzicId",
-                        column: x => x.RodzicId,
-                        principalTable: "AlgorytmGrupa",
-                        principalColumn: "IdAlgorytmGrupa",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_AlgorytmGrupa_AlgorytmOperacja_AlgorytmOperacjaId",
-                        column: x => x.AlgorytmOperacjaId,
-                        principalTable: "AlgorytmOperacja",
-                        principalColumn: "IdAlgorytmOperacja",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_AlgorytmGrupa_Algorytm_AlgorytmId",
-                        column: x => x.AlgorytmId,
-                        principalTable: "Algorytm",
-                        principalColumn: "IdAlgorytm",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Kierunek",
                 columns: table => new
                 {
@@ -213,6 +180,32 @@ namespace University_Admissions_Scoring_Engine.Migrations
                         column: x => x.TrybId,
                         principalTable: "KierunekTryb",
                         principalColumn: "IdTryb",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AlgorytmMatura",
+                columns: table => new
+                {
+                    IdAlgorytmMatura = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AlgorytmId = table.Column<int>(type: "int", nullable: false),
+                    MaturaId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AlgorytmMatura", x => x.IdAlgorytmMatura);
+                    table.ForeignKey(
+                        name: "FK_AlgorytmMatura_Algorytm_AlgorytmId",
+                        column: x => x.AlgorytmId,
+                        principalTable: "Algorytm",
+                        principalColumn: "IdAlgorytm",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AlgorytmMatura_Matura_MaturaId",
+                        column: x => x.MaturaId,
+                        principalTable: "Matura",
+                        principalColumn: "IdMatura",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -285,9 +278,9 @@ namespace University_Admissions_Scoring_Engine.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     KandydatId = table.Column<int>(type: "int", nullable: false),
                     KierunekId = table.Column<int>(type: "int", nullable: false),
-                    Punkty = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    Ranking = table.Column<int>(type: "int", nullable: false),
-                    StatusId = table.Column<int>(type: "int", nullable: false)
+                    Punkty = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
+                    Ranking = table.Column<int>(type: "int", nullable: true),
+                    StatusId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -303,7 +296,7 @@ namespace University_Admissions_Scoring_Engine.Migrations
                         column: x => x.KierunekId,
                         principalTable: "Kierunek",
                         principalColumn: "IdKierunek",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Kandydat_Kierunek_Status_StatusId",
                         column: x => x.StatusId,
@@ -313,30 +306,42 @@ namespace University_Admissions_Scoring_Engine.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AlgorytmLicz",
+                name: "AlgorytmGrupa",
                 columns: table => new
                 {
-                    IdAlgorytmLicz = table.Column<int>(type: "int", nullable: false)
+                    IdAlgorytmGrupa = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PrzedmiotRodzajPoziomId = table.Column<int>(type: "int", nullable: false),
-                    AlgorytmGrupaId = table.Column<int>(type: "int", nullable: false),
-                    Liczba = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
+                    AlgorytmMaturaId = table.Column<int>(type: "int", nullable: false),
+                    RodzicId = table.Column<int>(type: "int", nullable: true),
+                    AlgorytmOperacjaId = table.Column<int>(type: "int", nullable: false),
+                    AlgorytmOperacjaIdAlgorytmOperacja = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AlgorytmLicz", x => x.IdAlgorytmLicz);
+                    table.PrimaryKey("PK_AlgorytmGrupa", x => x.IdAlgorytmGrupa);
                     table.ForeignKey(
-                        name: "FK_AlgorytmLicz_AlgorytmGrupa_AlgorytmGrupaId",
-                        column: x => x.AlgorytmGrupaId,
+                        name: "FK_AlgorytmGrupa_AlgorytmGrupa_RodzicId",
+                        column: x => x.RodzicId,
                         principalTable: "AlgorytmGrupa",
                         principalColumn: "IdAlgorytmGrupa",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AlgorytmGrupa_AlgorytmMatura_AlgorytmMaturaId",
+                        column: x => x.AlgorytmMaturaId,
+                        principalTable: "AlgorytmMatura",
+                        principalColumn: "IdAlgorytmMatura",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_AlgorytmLicz_Przedmiot_Rodzaj_Poziom_PrzedmiotRodzajPoziomId",
-                        column: x => x.PrzedmiotRodzajPoziomId,
-                        principalTable: "Przedmiot_Rodzaj_Poziom",
-                        principalColumn: "IdPrzedmiotRodzajPoziom",
+                        name: "FK_AlgorytmGrupa_AlgorytmOperacja_AlgorytmOperacjaId",
+                        column: x => x.AlgorytmOperacjaId,
+                        principalTable: "AlgorytmOperacja",
+                        principalColumn: "IdAlgorytmOperacja",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AlgorytmGrupa_AlgorytmOperacja_AlgorytmOperacjaIdAlgorytmOperacja",
+                        column: x => x.AlgorytmOperacjaIdAlgorytmOperacja,
+                        principalTable: "AlgorytmOperacja",
+                        principalColumn: "IdAlgorytmOperacja");
                 });
 
             migrationBuilder.CreateTable(
@@ -392,15 +397,47 @@ namespace University_Admissions_Scoring_Engine.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "AlgorytmLicz",
+                columns: table => new
+                {
+                    IdAlgorytmLicz = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PrzedmiotRodzajPoziomId = table.Column<int>(type: "int", nullable: false),
+                    AlgorytmGrupaId = table.Column<int>(type: "int", nullable: false),
+                    Liczba = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AlgorytmLicz", x => x.IdAlgorytmLicz);
+                    table.ForeignKey(
+                        name: "FK_AlgorytmLicz_AlgorytmGrupa_AlgorytmGrupaId",
+                        column: x => x.AlgorytmGrupaId,
+                        principalTable: "AlgorytmGrupa",
+                        principalColumn: "IdAlgorytmGrupa",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AlgorytmLicz_Przedmiot_Rodzaj_Poziom_PrzedmiotRodzajPoziomId",
+                        column: x => x.PrzedmiotRodzajPoziomId,
+                        principalTable: "Przedmiot_Rodzaj_Poziom",
+                        principalColumn: "IdPrzedmiotRodzajPoziom",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
-                name: "IX_AlgorytmGrupa_AlgorytmId",
+                name: "IX_AlgorytmGrupa_AlgorytmMaturaId",
                 table: "AlgorytmGrupa",
-                column: "AlgorytmId");
+                column: "AlgorytmMaturaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AlgorytmGrupa_AlgorytmOperacjaId",
                 table: "AlgorytmGrupa",
                 column: "AlgorytmOperacjaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlgorytmGrupa_AlgorytmOperacjaIdAlgorytmOperacja",
+                table: "AlgorytmGrupa",
+                column: "AlgorytmOperacjaIdAlgorytmOperacja");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AlgorytmGrupa_RodzicId",
@@ -416,6 +453,17 @@ namespace University_Admissions_Scoring_Engine.Migrations
                 name: "IX_AlgorytmLicz_PrzedmiotRodzajPoziomId",
                 table: "AlgorytmLicz",
                 column: "PrzedmiotRodzajPoziomId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlgorytmMatura_AlgorytmId_MaturaId",
+                table: "AlgorytmMatura",
+                columns: new[] { "AlgorytmId", "MaturaId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlgorytmMatura_MaturaId",
+                table: "AlgorytmMatura",
+                column: "MaturaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Kandydat_Email",
@@ -540,10 +588,10 @@ namespace University_Admissions_Scoring_Engine.Migrations
                 name: "Przedmiot_Rodzaj_Poziom");
 
             migrationBuilder.DropTable(
-                name: "AlgorytmOperacja");
+                name: "AlgorytmMatura");
 
             migrationBuilder.DropTable(
-                name: "Algorytm");
+                name: "AlgorytmOperacja");
 
             migrationBuilder.DropTable(
                 name: "KierunekRodzaj");
@@ -555,9 +603,6 @@ namespace University_Admissions_Scoring_Engine.Migrations
                 name: "Kandydat");
 
             migrationBuilder.DropTable(
-                name: "Matura");
-
-            migrationBuilder.DropTable(
                 name: "PrzedmiotPoziom");
 
             migrationBuilder.DropTable(
@@ -565,6 +610,12 @@ namespace University_Admissions_Scoring_Engine.Migrations
 
             migrationBuilder.DropTable(
                 name: "Przedmiot");
+
+            migrationBuilder.DropTable(
+                name: "Algorytm");
+
+            migrationBuilder.DropTable(
+                name: "Matura");
         }
     }
 }

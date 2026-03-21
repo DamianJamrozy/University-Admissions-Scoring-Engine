@@ -1,22 +1,39 @@
-﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmDetailsViewModel
-@using University_Admissions_Scoring_Engine.Models
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmEditorViewModel
 
 @{
-    var rootGroups = Model.Groups.Where(g => g.RodzicId == null).ToList();
+    var rootGroups = Model.Groups
+        .Where(g => g.RodzicId == null)
+        .OrderBy(g => g.IdAlgorytmGrupa)
+        .ToList();
+
+    var groupNumbers = Model.Groups
+        .OrderBy(g => g.IdAlgorytmGrupa)
+        .Select((g, i) => new { g.IdAlgorytmGrupa, Number = i })
+        .ToDictionary(x => x.IdAlgorytmGrupa, x => x.Number);
 }
 
 <style>
-    .algorytm-page {
-        max-width: 1400px;
+    .alg-page {
+        max-width: 1450px;
+        margin: 0 auto;
     }
 
     .alg-header {
         display: flex;
-        flex-wrap: wrap;
         justify-content: space-between;
-        align-items: center;
-        gap: 16px;
+        align-items: flex-start;
+        gap: 20px;
+        flex-wrap: wrap;
         margin-bottom: 24px;
+    }
+
+    .alg-title-wrap h1 {
+        margin-bottom: 6px;
+    }
+
+    .alg-title-wrap .sub {
+        color: #6c757d;
+        font-size: 0.95rem;
     }
 
     .alg-actions {
@@ -25,154 +42,529 @@
         flex-wrap: wrap;
     }
 
-    .tree-wrapper {
-        margin-top: 24px;
-        padding: 20px;
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 14px;
+    .matura-switch {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 18px 0 24px 0;
     }
 
-    .tree-root {
+    .matura-link {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 999px;
+        text-decoration: none;
+        border: 1px solid #cfd8e3;
+        background: #fff;
+        color: #1f2d3d;
+        font-weight: 600;
+        transition: 0.2s ease;
+    }
+
+        .matura-link:hover {
+            background: #f3f7fb;
+            text-decoration: none;
+        }
+
+        .matura-link.active {
+            background: #0d6efd;
+            color: #fff;
+            border-color: #0d6efd;
+        }
+
+    .panel-box {
+        background: #f8fafc;
+        border: 1px solid #dbe4ee;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    }
+
+        .panel-box h3 {
+            margin-bottom: 18px;
+        }
+
+    .empty-state {
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px dashed #c9d3df;
+        color: #6c757d;
+        background: #fff;
+    }
+
+    .tree {
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 16px;
     }
 
-    .group-node {
+    .group {
         position: relative;
-        margin-left: 24px;
+        margin-left: 28px;
         padding-left: 24px;
-        border-left: 2px dashed #c7ced6;
+        border-left: 2px dashed #c7d2de;
     }
 
-    .group-node.root {
-        margin-left: 0;
-        padding-left: 0;
-        border-left: none;
-    }
+        .group.root {
+            margin-left: 0;
+            padding-left: 0;
+            border-left: none;
+        }
 
     .group-card {
-        background: #ffffff;
+        background: #fff;
         border: 1px solid #d9e2ec;
-        border-radius: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        border-radius: 16px;
         padding: 16px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
         margin-bottom: 12px;
     }
 
-    .group-top {
+    .group-title {
         display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 12px;
+        align-items: center;
+        gap: 10px;
         flex-wrap: wrap;
     }
 
-    .group-badge {
+    .group-number {
+        font-size: 1.08rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .group-parent {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .group-op-badge {
         display: inline-block;
-        padding: 6px 12px;
+        padding: 5px 12px;
         border-radius: 999px;
+        background: #2563eb;
+        color: #fff;
+        font-size: 0.86rem;
         font-weight: 700;
-        font-size: 0.9rem;
-        background: #0d6efd;
-        color: white;
     }
 
-    .group-meta {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .group-id {
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-
-    .group-actions {
+    .group-toolbar {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
+        align-items: center;
     }
 
-    .element-list {
-        margin-top: 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+        .group-toolbar form {
+            margin: 0;
+        }
+
+    .group-operation-row {
+        margin-bottom: 14px;
     }
 
-    .element-item {
-        background: #f8fbff;
-        border: 1px solid #d6e4ff;
-        border-radius: 10px;
-        padding: 12px 14px;
-    }
+        .group-operation-row select {
+            max-width: 220px;
+        }
 
-    .element-subtitle {
-        color: #6c757d;
-        font-size: 0.92rem;
-    }
-
-    .children-block {
-        margin-top: 14px;
+    .elements-wrap {
         display: flex;
         flex-direction: column;
         gap: 12px;
+        margin-top: 14px;
     }
 
-    .empty-info {
-        padding: 18px;
+    .element-card {
+        border: 1px solid #d9e8ff;
+        background: #f8fbff;
         border-radius: 12px;
-        background: #fff3cd;
-        border: 1px solid #ffe69c;
-        color: #664d03;
+        padding: 12px;
+    }
+
+    .element-row {
+        display: grid;
+        grid-template-columns: minmax(420px, 1fr) 140px 170px;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .element-actions-right {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .children-wrap {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .preview-node {
+        position: relative;
+        margin-left: 28px;
+        padding-left: 24px;
+        border-left: 2px dashed #c7d2de;
+        margin-top: 12px;
+    }
+
+        .preview-node.root {
+            margin-left: 0;
+            padding-left: 0;
+            border-left: none;
+        }
+
+    .preview-card {
+        background: #fff;
+        border: 1px solid #d9e2ec;
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .preview-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+
+    .preview-elements {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .preview-element {
+        background: #f8fbff;
+        border: 1px solid #d9e8ff;
+        border-radius: 10px;
+        padding: 8px 10px;
+    }
+
+    .sticky-save {
+        position: sticky;
+        top: 12px;
+        z-index: 10;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* custom subject picker */
+    .subject-picker {
+        position: relative;
+    }
+
+    .subject-trigger {
+        width: 100%;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .subject-trigger-label {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .subject-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+        overflow: hidden;
+    }
+
+        .subject-dropdown.open {
+            display: block;
+        }
+
+    .subject-search-wrap {
+        padding: 10px;
+        border-bottom: 1px solid #eef2f7;
+        background: #f8fafc;
+    }
+
+    .subject-search-input {
+        width: 100%;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        padding: 8px 10px;
+        outline: none;
+    }
+
+    .subject-options {
+        max-height: 260px;
+        overflow: auto;
+    }
+
+    .subject-option {
+        padding: 10px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+        .subject-option:hover,
+        .subject-option.active {
+            background: #eef6ff;
+        }
+
+        .subject-option.hidden {
+            display: none;
+        }
+
+    @@media (max-width: 992px) {
+        .element-row {
+            grid-template-columns: 1fr;
+        }
+
+        .element-actions-right {
+            justify-content: flex-start;
+        }
     }
 </style>
 
-<div class="algorytm-page">
+<div class="alg-page">
+    <div id="antiForgeryHolder" class="d-none">
+        @Html.AntiForgeryToken()
+    </div>
+
     <div class="alg-header">
-        <div>
+        <div class="alg-title-wrap">
             <h1>Algorytm: @Model.Algorytm.Nazwa</h1>
-            <div class="text-muted">ID: @Model.Algorytm.IdAlgorytm</div>
+            <div class="sub">Konfiguracja wariantu dla wybranej matury</div>
         </div>
 
         <div class="alg-actions">
-            <a asp-action="AddGroup"
-               asp-route-algorytmId="@Model.Algorytm.IdAlgorytm"
-               class="btn btn-primary">
-                Dodaj grupę główną
-            </a>
+            <form asp-action="AddGroupInline" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="algorytmMaturaId" value="@Model.AlgorytmMaturaId" />
+                <button class="btn btn-primary">Dodaj grupę główną</button>
+            </form>
 
             <a asp-action="Index" class="btn btn-secondary">Powrót</a>
         </div>
     </div>
 
-    <div class="tree-wrapper">
-        <h3>Struktura algorytmu</h3>
+    <div class="matura-switch">
+        @foreach (var m in Model.Matury.OrderBy(x => x.IdMatura))
+        {
+            var activeClass = m.IdMatura == Model.SelectedMaturaId ? "matura-link active" : "matura-link";
+
+            <a asp-action="Details"
+               asp-route-id="@Model.Algorytm.IdAlgorytm"
+               asp-route-maturaId="@m.IdMatura"
+               class="@activeClass">
+                @m.Nazwa
+            </a>
+        }
+    </div>
+
+    <div class="panel-box">
+        <h3>Podgląd</h3>
 
         @if (!rootGroups.Any())
         {
-            <div class="empty-info">
-                Ten algorytm nie ma jeszcze żadnych grup. Dodaj grupę główną, aby rozpocząć budowę drzewa.
+            <div class="empty-state">
+                Brak grup dla wybranej matury.
             </div>
         }
         else
         {
-            <div class="tree-root">
-                @foreach (var group in rootGroups)
+            @foreach (var root in rootGroups)
+            {
+                @await Html.PartialAsync("_AlgorytmPreviewNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
                 {
-                    @await Html.PartialAsync("_AlgorytmGroupNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+                    CurrentGroup = root,
+                AllGroups = Model.Groups,
+                AllElements = Model.Elements,
+                Operacje = Model.Operacje,
+                PrzedmiotOpcje = Model.PrzedmiotOpcje,
+                AlgorytmId = Model.Algorytm.IdAlgorytm,
+                AlgorytmMaturaId = Model.AlgorytmMaturaId,
+                IsRoot = true,
+                GroupNumbers = groupNumbers
+                })
+                }
+        }
+    </div>
+
+    <div class="sticky-save">
+        <button type="button" class="btn btn-success btn-lg" onclick="saveAlgorithm(@Model.Algorytm.IdAlgorytm, @Model.SelectedMaturaId)">
+            Zapisz algorytm
+        </button>
+    </div>
+
+    <div class="panel-box">
+        <h3>Edytor</h3>
+
+        @if (!rootGroups.Any())
+        {
+            <div class="empty-state">
+                Kliknij „Dodaj grupę główną”, aby rozpocząć budowę algorytmu.
+            </div>
+        }
+        else
+        {
+            <div class="tree">
+                @foreach (var root in rootGroups)
+                {
+                    @await Html.PartialAsync("_AlgorytmEditorNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
                     {
-                        CurrentGroup = group,
+                        CurrentGroup = root,
                         AllGroups = Model.Groups,
                         AllElements = Model.Elements,
+                        Operacje = Model.Operacje,
+                        PrzedmiotOpcje = Model.PrzedmiotOpcje,
                         AlgorytmId = Model.Algorytm.IdAlgorytm,
-                        IsRoot = true
+                        AlgorytmMaturaId = Model.AlgorytmMaturaId,
+                        IsRoot = true,
+                        GroupNumbers = groupNumbers
                         })
                         }
             </div>
         }
     </div>
 </div>
+
+<script>
+    function saveAlgorithm(algorytmId, maturaId) {
+        const tokenInput = document.querySelector('#antiForgeryHolder input[name="__RequestVerificationToken"]');
+        const token = tokenInput ? tokenInput.value : '';
+
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/Algorytmy/SaveAll';
+
+        const tokenField = document.createElement('input');
+        tokenField.type = 'hidden';
+        tokenField.name = '__RequestVerificationToken';
+        tokenField.value = token;
+        form.appendChild(tokenField);
+
+        const algField = document.createElement('input');
+        algField.type = 'hidden';
+        algField.name = 'algorytmId';
+        algField.value = algorytmId;
+        form.appendChild(algField);
+
+        const matField = document.createElement('input');
+        matField.type = 'hidden';
+        matField.name = 'maturaId';
+        matField.value = maturaId;
+        form.appendChild(matField);
+
+        const rows = document.querySelectorAll('.js-element-row');
+        rows.forEach(row => {
+            const elementId = row.dataset.elementId;
+            const subjectId = row.querySelector('.js-subject-value').value;
+            const multiplier = row.querySelector('.js-multiplier').value;
+
+            const elId = document.createElement('input');
+            elId.type = 'hidden';
+            elId.name = 'elementIds';
+            elId.value = elementId;
+            form.appendChild(elId);
+
+            const subj = document.createElement('input');
+            subj.type = 'hidden';
+            subj.name = 'przedmiotRodzajPoziomIds';
+            subj.value = subjectId;
+            form.appendChild(subj);
+
+            const mul = document.createElement('input');
+            mul.type = 'hidden';
+            mul.name = 'liczby';
+            mul.value = multiplier;
+            form.appendChild(mul);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function closeAllSubjectDropdowns() {
+        document.querySelectorAll('.subject-dropdown.open').forEach(d => d.classList.remove('open'));
+    }
+
+    function initSubjectPickers() {
+        document.querySelectorAll('.subject-picker').forEach(picker => {
+            const trigger = picker.querySelector('.subject-trigger');
+            const dropdown = picker.querySelector('.subject-dropdown');
+            const search = picker.querySelector('.subject-search-input');
+            const options = picker.querySelectorAll('.subject-option');
+            const hidden = picker.querySelector('.js-subject-value');
+            const label = picker.querySelector('.subject-trigger-label');
+
+            trigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const isOpen = dropdown.classList.contains('open');
+                closeAllSubjectDropdowns();
+                if (!isOpen) {
+                    dropdown.classList.add('open');
+                    if (search) {
+                        search.value = '';
+                        options.forEach(o => o.classList.remove('hidden'));
+                        setTimeout(() => search.focus(), 0);
+                    }
+                }
+            });
+
+            options.forEach(option => {
+                option.addEventListener('click', function () {
+                    hidden.value = this.dataset.value;
+                    label.textContent = this.dataset.label;
+                    dropdown.classList.remove('open');
+                });
+            });
+
+            if (search) {
+                search.addEventListener('input', function () {
+                    const q = this.value.toLowerCase().trim();
+                    options.forEach(option => {
+                        const txt = option.dataset.label.toLowerCase();
+                        option.classList.toggle('hidden', !txt.includes(q));
+                    });
+                });
+
+                search.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+
+        document.addEventListener('click', function () {
+            closeAllSubjectDropdowns();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initSubjectPickers();
+    });
+</script>

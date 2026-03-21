@@ -1,0 +1,165 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+
+@{
+    var children = Model.AllGroups
+        .Where(x => x.RodzicId == Model.CurrentGroup.IdAlgorytmGrupa)
+        .OrderBy(x => x.IdAlgorytmGrupa)
+        .ToList();
+
+    var elements = Model.AllElements
+        .Where(x => x.AlgorytmGrupaId == Model.CurrentGroup.IdAlgorytmGrupa)
+        .ToList();
+
+    var currentNo = Model.GroupNumbers[Model.CurrentGroup.IdAlgorytmGrupa];
+    int? parentNo = null;
+
+    if (Model.CurrentGroup.RodzicId.HasValue && Model.GroupNumbers.ContainsKey(Model.CurrentGroup.RodzicId.Value))
+    {
+        parentNo = Model.GroupNumbers[Model.CurrentGroup.RodzicId.Value];
+    }
+
+    var cssClass = Model.IsRoot ? "group root" : "group";
+}
+
+<div class="@cssClass">
+    <div class="group-card">
+        <div class="group-header">
+            <div class="group-title">
+                <span class="group-number">Grupa @currentNo</span>
+
+                @if (parentNo != null)
+                {
+                    <span class="group-parent">| rodzic: grupa @parentNo</span>
+                }
+            </div>
+
+            <div class="group-toolbar">
+                <form asp-action="AddGroupInline" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="algorytmMaturaId" value="@Model.AlgorytmMaturaId" />
+                    <input type="hidden" name="rodzicId" value="@Model.CurrentGroup.IdAlgorytmGrupa" />
+                    <button class="btn btn-sm btn-outline-primary">+ grupa</button>
+                </form>
+
+                <form asp-action="AddElementInline" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="groupId" value="@Model.CurrentGroup.IdAlgorytmGrupa" />
+                    <button class="btn btn-sm btn-outline-success">+ element</button>
+                </form>
+
+                <form asp-action="DeleteGroup" method="post" onsubmit="return confirm('Usunąć grupę wraz z podgrupami?');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="groupId" value="@Model.CurrentGroup.IdAlgorytmGrupa" />
+                    <button class="btn btn-sm btn-outline-danger">Usuń</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="group-operation-row">
+            <form asp-action="UpdateGroupOperation" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="groupId" value="@Model.CurrentGroup.IdAlgorytmGrupa" />
+
+                <select name="operationId" onchange="this.form.submit()" class="form-select">
+                    @foreach (var op in Model.Operacje.OrderBy(x => x.Nazwa))
+                    {
+                        if (op.IdAlgorytmOperacja == Model.CurrentGroup.AlgorytmOperacjaId)
+                        {
+                            <option selected value="@op.IdAlgorytmOperacja">@op.Nazwa</option>
+                        }
+                        else
+                        {
+                            <option value="@op.IdAlgorytmOperacja">@op.Nazwa</option>
+                        }
+                    }
+                </select>
+            </form>
+        </div>
+
+        @if (elements.Any())
+        {
+            <div class="elements-wrap">
+                @foreach (var e in elements)
+                {
+                    var selectedOption = Model.PrzedmiotOpcje.FirstOrDefault(p => p.IdPrzedmiotRodzajPoziom == e.PrzedmiotRodzajPoziomId);
+                    var selectedLabel = selectedOption == null
+                    ? "Wybierz przedmiot"
+                    : $"{selectedOption.Przedmiot?.Nazwa} / {selectedOption.PrzedmiotRodzaj?.Nazwa} / {selectedOption.PrzedmiotPoziom?.Nazwa}";
+
+                    <div class="element-card js-element-row" data-element-id="@e.IdAlgorytmLicz">
+                        <div class="element-row">
+                            <div class="subject-picker">
+                                <input type="hidden"
+                                       class="js-subject-value"
+                                       value="@e.PrzedmiotRodzajPoziomId" />
+
+                                <button type="button" class="subject-trigger">
+                                    <span class="subject-trigger-label">@selectedLabel</span>
+                                    <span>▾</span>
+                                </button>
+
+                                <div class="subject-dropdown">
+                                    <div class="subject-search-wrap">
+                                        <input type="text" class="subject-search-input" placeholder="Szukaj przedmiotu..." />
+                                    </div>
+
+                                    <div class="subject-options">
+                                        @foreach (var p in Model.PrzedmiotOpcje
+                                                                        .OrderBy(x => x.Przedmiot!.Nazwa)
+                                                                        .ThenBy(x => x.PrzedmiotRodzaj!.Nazwa)
+                                                                        .ThenBy(x => x.PrzedmiotPoziom!.Nazwa))
+                                        {
+                                            var txt = $"{p.Przedmiot?.Nazwa} / {p.PrzedmiotRodzaj?.Nazwa} / {p.PrzedmiotPoziom?.Nazwa}";
+
+                                            <div class="subject-option @(p.IdPrzedmiotRodzajPoziom == e.PrzedmiotRodzajPoziomId ? "active" : "")"
+                                                 data-value="@p.IdPrzedmiotRodzajPoziom"
+                                                 data-label="@txt">
+                                                @txt
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <input type="number"
+                                       step="0.01"
+                                       value="@e.Liczba.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                       class="form-control js-multiplier" />
+                            </div>
+
+                            <div class="element-actions-right">
+                                <form asp-action="DeleteElement" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="elementId" value="@e.IdAlgorytmLicz" />
+                                    <button class="btn btn-sm btn-outline-danger">Usuń element</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (children.Any())
+        {
+            <div class="children-wrap">
+                @foreach (var child in children)
+                {
+                    @await Html.PartialAsync("_AlgorytmEditorNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+                    {
+                        CurrentGroup = child,
+                        AllGroups = Model.AllGroups,
+                        AllElements = Model.AllElements,
+                        Operacje = Model.Operacje,
+                        PrzedmiotOpcje = Model.PrzedmiotOpcje,
+                        AlgorytmId = Model.AlgorytmId,
+                        AlgorytmMaturaId = Model.AlgorytmMaturaId,
+                        IsRoot = false,
+                        GroupNumbers = Model.GroupNumbers
+                        })
+                        }
+            </div>
+        }
+    </div>
+</div>
