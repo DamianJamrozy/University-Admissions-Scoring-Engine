@@ -12,10 +12,10 @@ namespace University_Admissions_Scoring_Engine.Models
         public int KierunekId { get; set; }
 
         [Column(TypeName = "decimal(10,2)")]
-        public decimal Punkty { get; set; }
+        public decimal? Punkty { get; set; }
 
-        public int Ranking { get; set; }
-        public int StatusId { get; set; }
+        public int? Ranking { get; set; }
+        public int? StatusId { get; set; }
 
         public Kandydat? Kandydat { get; set; }
         public Kierunek? Kierunek { get; set; }

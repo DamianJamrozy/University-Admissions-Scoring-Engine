@@ -1,0 +1,82 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+
+@{
+    var children = Model.AllGroups
+        .Where(g => g.RodzicId == Model.CurrentGroup.IdAlgorytmGrupa)
+        .OrderBy(g => g.IdAlgorytmGrupa)
+        .ToList();
+
+    var elements = Model.AllElements
+        .Where(e => e.AlgorytmGrupaId == Model.CurrentGroup.IdAlgorytmGrupa)
+        .ToList();
+
+    var nodeClass = Model.IsRoot ? "group-node root" : "group-node";
+}
+
+<div class="@nodeClass">
+    <div class="group-card">
+        <div class="group-top">
+            <div class="group-meta">
+                <span class="group-badge">@Model.CurrentGroup.AlgorytmOperacja?.Nazwa</span>
+                <div class="group-id">
+                    Grupa ID: @Model.CurrentGroup.IdAlgorytmGrupa
+                    @if (Model.CurrentGroup.RodzicId != null)
+                    {
+                        <span>| Rodzic: @Model.CurrentGroup.RodzicId</span>
+                    }
+                </div>
+            </div>
+
+            <div class="group-actions">
+                <a asp-action="AddGroup"
+                   asp-route-algorytmId="@Model.AlgorytmId"
+                   asp-route-rodzicId="@Model.CurrentGroup.IdAlgorytmGrupa"
+                   class="btn btn-sm btn-outline-primary">
+                    Dodaj podgrupę
+                </a>
+
+                <a asp-action="AddElement"
+                   asp-route-algorytmGrupaId="@Model.CurrentGroup.IdAlgorytmGrupa"
+                   class="btn btn-sm btn-outline-success">
+                    Dodaj element
+                </a>
+            </div>
+        </div>
+
+        @if (elements.Any())
+        {
+            <div class="element-list">
+                @foreach (var e in elements)
+                {
+                    <div class="element-item">
+                        <div>
+                            <strong>@e.PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa</strong>
+                        </div>
+                        <div class="element-subtitle">
+                            @e.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa /
+                            @e.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa
+                            | mnożnik: <strong>@e.Liczba</strong>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (children.Any())
+        {
+            <div class="children-block">
+                @foreach (var child in children)
+                {
+                    @await Html.PartialAsync("_AlgorytmGroupNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+                    {
+                        CurrentGroup = child,
+                        AllGroups = Model.AllGroups,
+                        AllElements = Model.AllElements,
+                        AlgorytmId = Model.AlgorytmId,
+                        IsRoot = false
+                        })
+                        }
+            </div>
+        }
+    </div>
+</div>

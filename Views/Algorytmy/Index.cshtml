@@ -1,0 +1,29 @@
+﻿@model List<University_Admissions_Scoring_Engine.Models.Algorytm>
+
+<h1>Algorytmy</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Dodaj algorytm</a>
+</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nazwa</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.IdAlgorytm</td>
+                <td>@item.Nazwa</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.IdAlgorytm" class="btn btn-sm btn-secondary">Szczegóły</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

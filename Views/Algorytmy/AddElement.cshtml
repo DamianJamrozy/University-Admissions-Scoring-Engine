@@ -1,0 +1,21 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmElementCreateViewModel
+
+<h1>Dodaj element algorytmu</h1>
+
+<form asp-action="AddElement" method="post">
+    <input asp-for="AlgorytmGrupaId" type="hidden" />
+
+    <div class="mb-3">
+        <label asp-for="PrzedmiotRodzajPoziomId" class="form-label">Przedmiot</label>
+        <select asp-for="PrzedmiotRodzajPoziomId" asp-items="ViewBag.Przedmioty" class="form-select"></select>
+        <span asp-validation-for="PrzedmiotRodzajPoziomId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Liczba" class="form-label">Mnożnik</label>
+        <input asp-for="Liczba" class="form-control" />
+        <span asp-validation-for="Liczba" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Zapisz</button>
+</form>

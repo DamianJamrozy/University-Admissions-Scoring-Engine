@@ -568,9 +568,9 @@ namespace University_Admissions_Scoring_Engine.Data
                         {
                             KandydatId = kandydat.IdKandydat,
                             KierunekId = kierunek.IdKierunek,
-                            Punkty = 0m,
-                            Ranking = 0,
-                            StatusId = statusNiezakwalifikowany.IdStatus
+                            Punkty = null,
+                            Ranking = null,
+                            StatusId = null
                         });
                     }
                 }

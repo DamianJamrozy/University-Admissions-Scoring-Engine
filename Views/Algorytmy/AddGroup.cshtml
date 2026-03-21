@@ -1,0 +1,17 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupCreateViewModel
+
+<h1>Dodaj grupę</h1>
+
+<form asp-action="AddGroup" method="post">
+    <input asp-for="AlgorytmId" type="hidden" />
+    <input asp-for="RodzicId" type="hidden" />
+
+    <div class="mb-3">
+        <label asp-for="AlgorytmOperacjaId" class="form-label">Operacja</label>
+        <select asp-for="AlgorytmOperacjaId" asp-items="ViewBag.Operacje" class="form-select"></select>
+        <span asp-validation-for="AlgorytmOperacjaId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Zapisz</button>
+    <a asp-action="Details" asp-route-id="@Model.AlgorytmId" class="btn btn-secondary">Powrót</a>
+</form>

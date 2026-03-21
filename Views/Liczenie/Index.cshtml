@@ -1,0 +1,29 @@
+﻿@model List<University_Admissions_Scoring_Engine.Models.Kierunek>
+
+<h1>Liczenie punktów</h1>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Nazwa</th>
+            <th>Tryb</th>
+            <th>Rodzaj</th>
+            <th>Algorytm</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var k in Model)
+        {
+            <tr>
+                <td>@k.Nazwa</td>
+                <td>@k.Tryb?.Nazwa</td>
+                <td>@k.Rodzaj?.Nazwa</td>
+                <td>@k.Algorytm?.Nazwa</td>
+                <td>
+                    <a asp-action="Kierunek" asp-route-id="@k.IdKierunek" class="btn btn-sm btn-primary">Otwórz</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
