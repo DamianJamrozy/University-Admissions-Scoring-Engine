@@ -45,29 +45,50 @@ namespace University_Admissions_Scoring_Engine.Services
                     a.AlgorytmId == kierunek.AlgorytmId &&
                     a.MaturaId == dyplom.MaturaId);
 
+            var allGroups = await _context.AlgorytmGrupy
+                .Include(g => g.AlgorytmOperacja)
+                .Where(g => g.AlgorytmMaturaId == algorytmMatura.IdAlgorytmMatura)
+                .OrderBy(g => g.IdAlgorytmGrupa)
+                .ToListAsync();
+
+            var allElements = await _context.AlgorytmLicze
+                .Include(e => e.PrzedmiotRodzajPoziom)
+                    .ThenInclude(p => p!.Przedmiot)
+                .Include(e => e.PrzedmiotRodzajPoziom)
+                    .ThenInclude(p => p!.PrzedmiotRodzaj)
+                .Include(e => e.PrzedmiotRodzajPoziom)
+                    .ThenInclude(p => p!.PrzedmiotPoziom)
+                .Where(e => allGroups.Select(g => g.IdAlgorytmGrupa).Contains(e.AlgorytmGrupaId))
+                .ToListAsync();
+
             var wyniki = await _context.KandydatDyplomPrzedmioty
                 .Where(w => w.KandydatDyplomId == dyplom.IdKandydatDyplom)
                 .ToListAsync();
 
-            var dict = wyniki.ToDictionary(
+            var inputs = wyniki.ToDictionary(
                 x => x.PrzedmiotRodzajPoziomId,
                 x => x.Punkty
             );
 
-            var rootGroups = await _context.AlgorytmGrupy
-                .Include(g => g.AlgorytmOperacja)
-                .Where(g => g.AlgorytmMaturaId == algorytmMatura.IdAlgorytmMatura && g.RodzicId == null)
+            var groupNumbers = allGroups
                 .OrderBy(g => g.IdAlgorytmGrupa)
-                .ToListAsync();
+                .Select((g, i) => new { g.IdAlgorytmGrupa, Number = i })
+                .ToDictionary(x => x.IdAlgorytmGrupa, x => x.Number);
 
-            decimal wynik = 0m;
+            var rootGroups = allGroups
+                .Where(g => g.RodzicId == null)
+                .OrderBy(g => g.IdAlgorytmGrupa)
+                .ToList();
 
-            foreach (var group in rootGroups)
+            decimal total = 0m;
+
+            foreach (var root in rootGroups)
             {
-                wynik += await EvaluateGroup(group, dict);
+                var result = EvaluateGroupDetailed(root, allGroups, allElements, inputs, groupNumbers, 0);
+                total += result.Points;
             }
 
-            return wynik;
+            return total;
         }
 
         public async Task<AlgorithmTestResult> EvaluateTestAsync(AlgorytmTestRequestViewModel request)
@@ -136,46 +157,6 @@ namespace University_Admissions_Scoring_Engine.Services
             };
         }
 
-        private async Task<decimal> EvaluateGroup(AlgorytmGrupa group, Dictionary<int, decimal> wyniki)
-        {
-            var operation = group.AlgorytmOperacja?.Nazwa ?? string.Empty;
-
-            var dzieci = await _context.AlgorytmGrupy
-                .Include(g => g.AlgorytmOperacja)
-                .Where(g => g.RodzicId == group.IdAlgorytmGrupa)
-                .ToListAsync();
-
-            var elementy = await _context.AlgorytmLicze
-                .Where(l => l.AlgorytmGrupaId == group.IdAlgorytmGrupa)
-                .ToListAsync();
-
-            var values = new List<decimal>();
-
-            foreach (var el in elementy)
-            {
-                if (wyniki.TryGetValue(el.PrzedmiotRodzajPoziomId, out var val))
-                {
-                    values.Add(val * el.Liczba);
-                }
-            }
-
-            foreach (var child in dzieci)
-            {
-                values.Add(await EvaluateGroup(child, wyniki));
-            }
-
-            if (!values.Any())
-                return 0m;
-
-            if (operation == "SUMA")
-                return values.Sum();
-
-            if (operation == "LUB")
-                return values.Max();
-
-            return 0m;
-        }
-
         private GroupEvaluationResult EvaluateGroupDetailed(
             AlgorytmGrupa group,
             List<AlgorytmGrupa> allGroups,
@@ -197,23 +178,69 @@ namespace University_Admissions_Scoring_Engine.Services
                 .OrderBy(g => g.IdAlgorytmGrupa)
                 .ToList();
 
+            var groupLines = new List<string>
+            {
+                $"{indent}Grupa {groupNo} [{operation}]"
+            };
+
+            if (group.MinimalnePunkty.HasValue)
+            {
+                groupLines.Add($"{indent}  Minimum grupy: {group.MinimalnePunkty.Value:0.##}");
+            }
+
+            bool requirementFailed = false;
             var candidates = new List<GroupEvaluationCandidate>();
 
             foreach (var el in ownElements)
             {
-                if (!inputs.TryGetValue(el.PrzedmiotRodzajPoziomId, out var userPoints))
-                    continue;
+                var label = $"{el.PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa} / {el.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa} / {el.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa}";
+                var linePrefix = $"{indent}  - {label}";
 
-                var subjectLabel = $"{el.PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa} / {el.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa} / {el.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa}";
-                var calculated = userPoints * el.Liczba;
+                var hasInput = inputs.TryGetValue(el.PrzedmiotRodzajPoziomId, out var rawPoints);
+
+                if (!hasInput)
+                {
+                    if (el.CzyWymagany)
+                    {
+                        requirementFailed = true;
+                        groupLines.Add($"{linePrefix}: brak wyniku, a przedmiot jest wymagany.");
+                    }
+                    else
+                    {
+                        groupLines.Add($"{linePrefix}: brak wyniku, pominięto.");
+                    }
+
+                    continue;
+                }
+
+                if (el.MinimalnePunkty.HasValue && rawPoints < el.MinimalnePunkty.Value)
+                {
+                    if (el.CzyWymagany)
+                    {
+                        requirementFailed = true;
+                        groupLines.Add($"{linePrefix}: {rawPoints:0.##} < minimum {el.MinimalnePunkty.Value:0.##}, a przedmiot jest wymagany.");
+                    }
+                    else
+                    {
+                        groupLines.Add($"{linePrefix}: {rawPoints:0.##} < minimum {el.MinimalnePunkty.Value:0.##}, pominięto.");
+                    }
+
+                    continue;
+                }
+
+                var calculated = rawPoints * el.Liczba;
+
+                var localLines = new List<string>
+                {
+                    $"{linePrefix}: {rawPoints:0.##} × {el.Liczba:0.##} = {calculated:0.##}" +
+                    $"{(el.CzyWymagany ? " [wymagany]" : "")}" +
+                    $"{(el.MinimalnePunkty.HasValue ? $" [min {el.MinimalnePunkty.Value:0.##}]" : "")}"
+                };
 
                 candidates.Add(new GroupEvaluationCandidate
                 {
                     Points = calculated,
-                    Lines = new List<string>
-                    {
-                        $"{indent}- {subjectLabel}: {userPoints:0.##} × {el.Liczba:0.##} = {calculated:0.##}"
-                    }
+                    Lines = localLines
                 });
             }
 
@@ -227,35 +254,49 @@ namespace University_Admissions_Scoring_Engine.Services
                 });
             }
 
-            if (!candidates.Any())
+            if (requirementFailed)
             {
+                groupLines.Add($"{indent}=> Wynik grupy {groupNo}: 0 (niespełnione wymagania)");
                 return new GroupEvaluationResult
                 {
                     Points = 0m,
-                    Lines = new List<string>
-                    {
-                        $"{indent}Grupa {groupNo} [{operation}] → 0 (brak pasujących danych)"
-                    }
+                    Lines = groupLines
+                };
+            }
+
+            if (!candidates.Any())
+            {
+                groupLines.Add($"{indent}=> Wynik grupy {groupNo}: 0 (brak pasujących danych)");
+                return new GroupEvaluationResult
+                {
+                    Points = 0m,
+                    Lines = groupLines
                 };
             }
 
             if (operation == "SUMA")
             {
                 var total = candidates.Sum(x => x.Points);
-                var lines = new List<string>
-                {
-                    $"{indent}Grupa {groupNo} [SUMA]"
-                };
 
                 foreach (var c in candidates)
-                    lines.AddRange(c.Lines);
+                    groupLines.AddRange(c.Lines);
 
-                lines.Add($"{indent}=> Wynik grupy {groupNo}: {total:0.##}");
+                if (group.MinimalnePunkty.HasValue && total < group.MinimalnePunkty.Value)
+                {
+                    groupLines.Add($"{indent}=> Wynik grupy {groupNo}: 0 ({total:0.##} < minimum grupy {group.MinimalnePunkty.Value:0.##})");
+                    return new GroupEvaluationResult
+                    {
+                        Points = 0m,
+                        Lines = groupLines
+                    };
+                }
+
+                groupLines.Add($"{indent}=> Wynik grupy {groupNo}: {total:0.##}");
 
                 return new GroupEvaluationResult
                 {
                     Points = total,
-                    Lines = lines
+                    Lines = groupLines
                 };
             }
 
@@ -265,28 +306,33 @@ namespace University_Admissions_Scoring_Engine.Services
                     .OrderByDescending(x => x.Points)
                     .First();
 
-                var lines = new List<string>
-                {
-                    $"{indent}Grupa {groupNo} [LUB] — wybrano najlepszą ścieżkę"
-                };
+                groupLines.Add($"{indent}  Wybrana najlepsza ścieżka:");
+                groupLines.AddRange(best.Lines);
 
-                lines.AddRange(best.Lines);
-                lines.Add($"{indent}=> Wynik grupy {groupNo}: {best.Points:0.##}");
+                if (group.MinimalnePunkty.HasValue && best.Points < group.MinimalnePunkty.Value)
+                {
+                    groupLines.Add($"{indent}=> Wynik grupy {groupNo}: 0 ({best.Points:0.##} < minimum grupy {group.MinimalnePunkty.Value:0.##})");
+                    return new GroupEvaluationResult
+                    {
+                        Points = 0m,
+                        Lines = groupLines
+                    };
+                }
+
+                groupLines.Add($"{indent}=> Wynik grupy {groupNo}: {best.Points:0.##}");
 
                 return new GroupEvaluationResult
                 {
                     Points = best.Points,
-                    Lines = lines
+                    Lines = groupLines
                 };
             }
 
+            groupLines.Add($"{indent}=> Wynik grupy {groupNo}: 0 (nieznana operacja)");
             return new GroupEvaluationResult
             {
                 Points = 0m,
-                Lines = new List<string>
-                {
-                    $"{indent}Grupa {groupNo} [{operation}] → 0 (nieznana operacja)"
-                }
+                Lines = groupLines
             };
         }
 

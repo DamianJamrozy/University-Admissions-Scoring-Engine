@@ -10,6 +10,11 @@
         .Where(x => x.AlgorytmGrupaId == Model.CurrentGroup.IdAlgorytmGrupa)
         .ToList();
 
+    var subjectBlocks = elements
+        .GroupBy(x => x.PrzedmiotRodzajPoziom!.PrzedmiotId)
+        .OrderBy(g => g.First().PrzedmiotRodzajPoziom!.Przedmiot!.Nazwa)
+        .ToList();
+
     var currentNo = Model.GroupNumbers[Model.CurrentGroup.IdAlgorytmGrupa];
     int? parentNo = null;
 
@@ -31,20 +36,40 @@
             {
                 <span class="group-parent">| rodzic: grupa @parentNo</span>
             }
+
+            @if (Model.CurrentGroup.MinimalnePunkty.HasValue)
+            {
+                <span class="group-parent">| min grupy: @Model.CurrentGroup.MinimalnePunkty.Value</span>
+            }
         </div>
 
-        @if (elements.Any())
+        @if (subjectBlocks.Any())
         {
             <div class="preview-elements">
-                @foreach (var e in elements)
+                @foreach (var subjectBlock in subjectBlocks)
                 {
+                    var subjectName = subjectBlock.First().PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa ?? "-";
+
                     <div class="preview-element">
-                        <strong>@e.PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa</strong>
-                        —
-                        @e.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa /
-                        @e.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa
-                        —
-                        mnożnik: <strong>@e.Liczba</strong>
+                        <div><strong>@subjectName</strong></div>
+
+                        @foreach (var e in subjectBlock.OrderBy(x => x.PrzedmiotRodzajPoziom!.PrzedmiotRodzaj!.Nazwa)
+                                        .ThenBy(x => x.PrzedmiotRodzajPoziom!.PrzedmiotPoziom!.Nazwa))
+                        {
+                            <div>
+                                - @e.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa /
+                                @e.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa
+                                | mnożnik: <strong>@e.Liczba</strong>
+                                @if (e.CzyWymagany)
+                                {
+                                    <span>| wymagany</span>
+                                }
+                                @if (e.MinimalnePunkty.HasValue)
+                                {
+                                    <span>| min: @e.MinimalnePunkty.Value</span>
+                                }
+                            </div>
+                        }
                     </div>
                 }
             </div>

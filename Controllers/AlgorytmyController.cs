@@ -136,7 +136,8 @@ namespace University_Admissions_Scoring_Engine.Controllers
             {
                 AlgorytmMaturaId = algorytmMaturaId,
                 RodzicId = rodzicId,
-                AlgorytmOperacjaId = operacja.IdAlgorytmOperacja
+                AlgorytmOperacjaId = operacja.IdAlgorytmOperacja,
+                MinimalnePunkty = null
             };
 
             _context.AlgorytmGrupy.Add(grupa);
@@ -154,14 +155,50 @@ namespace University_Admissions_Scoring_Engine.Controllers
                 return Json(new { success = false });
 
             var first = await _context.PrzedmiotRodzajPoziomy
-                .OrderBy(x => x.IdPrzedmiotRodzajPoziom)
+                .OrderBy(x => x.PrzedmiotId)
+                .ThenBy(x => x.PrzedmiotRodzajId)
+                .ThenBy(x => x.PrzedmiotPoziomId)
                 .FirstAsync();
 
             var element = new AlgorytmLicz
             {
                 AlgorytmGrupaId = groupId,
                 PrzedmiotRodzajPoziomId = first.IdPrzedmiotRodzajPoziom,
-                Liczba = 1m
+                Liczba = 1m,
+                CzyWymagany = false,
+                MinimalnePunkty = null
+            };
+
+            _context.AlgorytmLicze.Add(element);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddCombinationInlineAjax(int groupId, int subjectId)
+        {
+            var grupa = await _context.AlgorytmGrupy.FindAsync(groupId);
+            if (grupa == null)
+                return Json(new { success = false });
+
+            var first = await _context.PrzedmiotRodzajPoziomy
+                .Where(x => x.PrzedmiotId == subjectId)
+                .OrderBy(x => x.PrzedmiotRodzajId)
+                .ThenBy(x => x.PrzedmiotPoziomId)
+                .FirstOrDefaultAsync();
+
+            if (first == null)
+                return Json(new { success = false });
+
+            var element = new AlgorytmLicz
+            {
+                AlgorytmGrupaId = groupId,
+                PrzedmiotRodzajPoziomId = first.IdPrzedmiotRodzajPoziom,
+                Liczba = 1m,
+                CzyWymagany = false,
+                MinimalnePunkty = null
             };
 
             _context.AlgorytmLicze.Add(element);
@@ -179,6 +216,24 @@ namespace University_Admissions_Scoring_Engine.Controllers
                 return Json(new { success = false });
 
             _context.AlgorytmLicze.Remove(element);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteSubjectBlockAjax(int groupId, int subjectId)
+        {
+            var elements = await _context.AlgorytmLicze
+                .Include(x => x.PrzedmiotRodzajPoziom)
+                .Where(x => x.AlgorytmGrupaId == groupId && x.PrzedmiotRodzajPoziom!.PrzedmiotId == subjectId)
+                .ToListAsync();
+
+            if (!elements.Any())
+                return Json(new { success = false });
+
+            _context.AlgorytmLicze.RemoveRange(elements);
             await _context.SaveChangesAsync();
 
             return Json(new { success = true });
@@ -216,11 +271,14 @@ namespace University_Admissions_Scoring_Engine.Controllers
             if (request == null)
                 return Json(new { success = false });
 
-            if (request.GroupIds.Count != request.OperationIds.Count)
+            if (request.GroupIds.Count != request.OperationIds.Count ||
+                request.GroupIds.Count != request.GroupMinimums.Count)
                 return Json(new { success = false });
 
             if (request.ElementIds.Count != request.PrzedmiotRodzajPoziomIds.Count ||
-                request.ElementIds.Count != request.Liczby.Count)
+                request.ElementIds.Count != request.Liczby.Count ||
+                request.ElementIds.Count != request.ElementRequiredFlags.Count ||
+                request.ElementIds.Count != request.ElementMinimums.Count)
                 return Json(new { success = false });
 
             var groups = await _context.AlgorytmGrupy
@@ -230,8 +288,11 @@ namespace University_Admissions_Scoring_Engine.Controllers
             for (int i = 0; i < request.GroupIds.Count; i++)
             {
                 var g = groups.FirstOrDefault(x => x.IdAlgorytmGrupa == request.GroupIds[i]);
-                if (g != null)
-                    g.AlgorytmOperacjaId = request.OperationIds[i];
+                if (g == null)
+                    continue;
+
+                g.AlgorytmOperacjaId = request.OperationIds[i];
+                g.MinimalnePunkty = request.GroupMinimums[i];
             }
 
             var elements = await _context.AlgorytmLicze
@@ -246,6 +307,8 @@ namespace University_Admissions_Scoring_Engine.Controllers
 
                 e.PrzedmiotRodzajPoziomId = request.PrzedmiotRodzajPoziomIds[i];
                 e.Liczba = request.Liczby[i];
+                e.CzyWymagany = request.ElementRequiredFlags[i];
+                e.MinimalnePunkty = request.ElementMinimums[i];
             }
 
             await _context.SaveChangesAsync();
@@ -415,9 +478,12 @@ namespace University_Admissions_Scoring_Engine.Controllers
 
         public List<int> GroupIds { get; set; } = new();
         public List<int> OperationIds { get; set; } = new();
+        public List<decimal?> GroupMinimums { get; set; } = new();
 
         public List<int> ElementIds { get; set; } = new();
         public List<int> PrzedmiotRodzajPoziomIds { get; set; } = new();
         public List<decimal> Liczby { get; set; } = new();
+        public List<bool> ElementRequiredFlags { get; set; } = new();
+        public List<decimal?> ElementMinimums { get; set; } = new();
     }
 }

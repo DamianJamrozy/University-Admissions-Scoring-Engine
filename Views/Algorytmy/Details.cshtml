@@ -157,10 +157,6 @@
         margin-bottom: 14px;
     }
 
-    .group-operation-row select {
-        max-width: 220px;
-    }
-
     .elements-wrap {
         display: flex;
         flex-direction: column;
@@ -173,13 +169,6 @@
         background: #f8fbff;
         border-radius: 12px;
         padding: 12px;
-    }
-
-    .element-row {
-        display: grid;
-        grid-template-columns: minmax(420px, 1fr) 140px 170px;
-        gap: 12px;
-        align-items: center;
     }
 
     .element-actions-right {
@@ -246,11 +235,11 @@
         justify-content: flex-end;
     }
 
-    .subject-picker {
+    .custom-picker {
         position: relative;
     }
 
-    .subject-trigger {
+    .custom-picker-trigger {
         width: 100%;
         min-height: 42px;
         display: flex;
@@ -265,13 +254,13 @@
         text-align: left;
     }
 
-    .subject-trigger-label {
+    .custom-picker-label {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
 
-    .subject-dropdown {
+    .custom-picker-dropdown {
         display: none;
         position: absolute;
         top: calc(100% + 6px);
@@ -285,17 +274,17 @@
         overflow: hidden;
     }
 
-    .subject-dropdown.open {
+    .custom-picker-dropdown.open {
         display: block;
     }
 
-    .subject-search-wrap {
+    .custom-picker-search-wrap {
         padding: 10px;
         border-bottom: 1px solid #eef2f7;
         background: #f8fafc;
     }
 
-    .subject-search-input {
+    .custom-picker-search {
         width: 100%;
         border: 1px solid #ced4da;
         border-radius: 8px;
@@ -303,23 +292,23 @@
         outline: none;
     }
 
-    .subject-options {
+    .custom-picker-options {
         max-height: 260px;
         overflow: auto;
     }
 
-    .subject-option {
+    .custom-picker-option {
         padding: 10px 12px;
         cursor: pointer;
         border-bottom: 1px solid #f1f5f9;
     }
 
-    .subject-option:hover,
-    .subject-option.active {
+    .custom-picker-option:hover,
+    .custom-picker-option.active {
         background: #eef6ff;
     }
 
-    .subject-option.hidden {
+    .custom-picker-option.hidden {
         display: none;
     }
 
@@ -421,13 +410,8 @@
     }
 
     @@media (max-width: 992px) {
-        .element-row,
         .test-row {
             grid-template-columns: 1fr;
-        }
-
-        .element-actions-right {
-            justify-content: flex-start;
         }
     }
 </style>
@@ -436,6 +420,32 @@
     <div id="antiForgeryHolder" class="d-none">
         @Html.AntiForgeryToken()
     </div>
+
+    <script id="subjects-json" type="application/json">
+        @Html.Raw(JsonSerializer.Serialize(
+            Model.PrzedmiotOpcje
+                .GroupBy(x => x.PrzedmiotId)
+                .Select(g => new {
+                    value = g.Key,
+                    label = g.First().Przedmiot!.Nazwa
+                })
+                .OrderBy(x => x.label)
+        ))
+    </script>
+
+    <script id="combos-json" type="application/json">
+        @Html.Raw(JsonSerializer.Serialize(
+            Model.PrzedmiotOpcje.Select(x => new {
+                id = x.IdPrzedmiotRodzajPoziom,
+                subjectId = x.PrzedmiotId,
+                rodzajId = x.PrzedmiotRodzajId,
+                rodzajName = x.PrzedmiotRodzaj!.Nazwa,
+                poziomId = x.PrzedmiotPoziomId,
+                poziomName = x.PrzedmiotPoziom!.Nazwa,
+                label = $"{x.Przedmiot!.Nazwa} / {x.PrzedmiotRodzaj!.Nazwa} / {x.PrzedmiotPoziom!.Nazwa}"
+            })
+        ))
+    </script>
 
     <div class="alg-header">
         <div class="alg-title-wrap">
@@ -511,12 +521,8 @@
     window.currentMaturaId = @Model.SelectedMaturaId;
     window.currentAlgorytmId = @Model.Algorytm.IdAlgorytm;
 
-    window.subjectOptionsData = @Html.Raw(JsonSerializer.Serialize(
-        Model.PrzedmiotOpcje.Select(p => new {
-            value = p.IdPrzedmiotRodzajPoziom,
-            label = $"{p.Przedmiot!.Nazwa} / {p.PrzedmiotRodzaj!.Nazwa} / {p.PrzedmiotPoziom!.Nazwa}"
-        })
-    ));
+    window.subjectsData = JSON.parse(document.getElementById('subjects-json').textContent);
+    window.comboData = JSON.parse(document.getElementById('combos-json').textContent);
 
     function getAntiForgeryToken() {
         const tokenInput = document.querySelector('#antiForgeryHolder input[name="__RequestVerificationToken"]');
@@ -527,31 +533,32 @@
         const response = await fetch(`/Algorytmy/EditorContent?id=${algorytmId}&maturaId=${maturaId}`);
         const html = await response.text();
         document.getElementById('algorytm-workspace').innerHTML = html;
-        initSubjectPickers(document);
+        initCustomPickers(document);
+        initSubjectBlocks(document);
     }
 
-    function closeAllSubjectDropdowns() {
-        document.querySelectorAll('.subject-dropdown.open').forEach(d => d.classList.remove('open'));
+    function closeAllPickers() {
+        document.querySelectorAll('.custom-picker-dropdown.open').forEach(d => d.classList.remove('open'));
     }
 
-    function initSubjectPickers(root) {
+    function initCustomPickers(root) {
         const scope = root || document;
 
-        scope.querySelectorAll('.subject-picker').forEach(picker => {
+        scope.querySelectorAll('.custom-picker').forEach(picker => {
             if (picker.dataset.initialized === '1') return;
             picker.dataset.initialized = '1';
 
-            const trigger = picker.querySelector('.subject-trigger');
-            const dropdown = picker.querySelector('.subject-dropdown');
-            const search = picker.querySelector('.subject-search-input');
-            const options = picker.querySelectorAll('.subject-option');
-            const hidden = picker.querySelector('.js-subject-value');
-            const label = picker.querySelector('.subject-trigger-label');
+            const trigger = picker.querySelector('.custom-picker-trigger');
+            const dropdown = picker.querySelector('.custom-picker-dropdown');
+            const search = picker.querySelector('.custom-picker-search');
+            const options = picker.querySelectorAll('.custom-picker-option');
+            const hidden = picker.querySelector('input[type="hidden"]');
+            const label = picker.querySelector('.custom-picker-label');
 
             trigger.addEventListener('click', function (e) {
                 e.stopPropagation();
                 const isOpen = dropdown.classList.contains('open');
-                closeAllSubjectDropdowns();
+                closeAllPickers();
                 if (!isOpen) {
                     dropdown.classList.add('open');
                     if (search) {
@@ -569,6 +576,11 @@
                     options.forEach(o => o.classList.remove('active'));
                     this.classList.add('active');
                     dropdown.classList.remove('open');
+
+                    const subjectBlock = picker.closest('.js-subject-block');
+                    if (subjectBlock && hidden.classList.contains('js-subject-id')) {
+                        syncSubjectBlock(subjectBlock);
+                    }
                 });
             });
 
@@ -588,7 +600,85 @@
         });
 
         document.addEventListener('click', function () {
-            closeAllSubjectDropdowns();
+            closeAllPickers();
+        });
+    }
+
+    function getCombosForSubject(subjectId) {
+        return window.comboData.filter(x => parseInt(x.subjectId) === parseInt(subjectId));
+    }
+
+    function syncCombinationRow(row) {
+        const subjectBlock = row.closest('.js-subject-block');
+        const subjectId = parseInt(subjectBlock.querySelector('.js-subject-id').value);
+
+        const combos = getCombosForSubject(subjectId);
+        if (!combos.length) return;
+
+        const rodzajSelect = row.querySelector('.js-rodzaj-id');
+        const poziomSelect = row.querySelector('.js-poziom-id');
+
+        const currentRodzaj = parseInt(rodzajSelect.value || '0');
+        const currentPoziom = parseInt(poziomSelect.value || '0');
+
+        const rodzaje = [...new Map(combos.map(c => [c.rodzajId, { id: c.rodzajId, name: c.rodzajName }])).values()]
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        const poziomy = [...new Map(combos.map(c => [c.poziomId, { id: c.poziomId, name: c.poziomName }])).values()]
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        rodzajSelect.innerHTML = '';
+        rodzaje.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = r.name;
+            rodzajSelect.appendChild(opt);
+        });
+
+        poziomSelect.innerHTML = '';
+        poziomy.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.name;
+            poziomSelect.appendChild(opt);
+        });
+
+        let match = combos.find(c => parseInt(c.rodzajId) === currentRodzaj && parseInt(c.poziomId) === currentPoziom);
+        if (!match) match = combos.find(c => parseInt(c.rodzajId) === currentRodzaj);
+        if (!match) match = combos.find(c => parseInt(c.poziomId) === currentPoziom);
+        if (!match) match = combos[0];
+
+        rodzajSelect.value = match.rodzajId;
+        poziomSelect.value = match.poziomId;
+    }
+
+    function syncSubjectBlock(subjectBlock) {
+        subjectBlock.querySelectorAll('.js-element-row').forEach(row => {
+            syncCombinationRow(row);
+        });
+    }
+
+    function initSubjectBlocks(root) {
+        const scope = root || document;
+
+        scope.querySelectorAll('.js-subject-block').forEach(block => {
+            if (block.dataset.initialized === '1') return;
+            block.dataset.initialized = '1';
+
+            block.querySelectorAll('.js-element-row').forEach(row => {
+                const rodzajSelect = row.querySelector('.js-rodzaj-id');
+                const poziomSelect = row.querySelector('.js-poziom-id');
+
+                rodzajSelect.addEventListener('change', function () {
+                    syncCombinationRow(row);
+                });
+
+                poziomSelect.addEventListener('change', function () {
+                    syncCombinationRow(row);
+                });
+
+                syncCombinationRow(row);
+            });
         });
     }
 
@@ -634,8 +724,32 @@
         }
     }
 
+    async function addCombination(groupId, subjectId, algorytmId, maturaId) {
+        const result = await postFormUrlEncoded('/Algorytmy/AddCombinationInlineAjax', {
+            groupId: groupId,
+            subjectId: subjectId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        }
+    }
+
+    async function deleteSubjectBlock(groupId, subjectId, algorytmId, maturaId) {
+        if (!confirm('Usunąć cały przedmiot wraz ze wszystkimi kombinacjami?')) return;
+
+        const result = await postFormUrlEncoded('/Algorytmy/DeleteSubjectBlockAjax', {
+            groupId: groupId,
+            subjectId: subjectId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        }
+    }
+
     async function deleteElement(elementId, algorytmId, maturaId) {
-        if (!confirm('Usunąć element?')) return;
+        if (!confirm('Usunąć kombinację?')) return;
 
         const result = await postFormUrlEncoded('/Algorytmy/DeleteElementAjax', {
             elementId: elementId
@@ -661,20 +775,47 @@
     async function saveAlgorithm(algorytmId, maturaId) {
         const groupIds = [];
         const operationIds = [];
+        const groupMinimums = [];
 
         document.querySelectorAll('.js-group-op').forEach(el => {
-            groupIds.push(parseInt(el.dataset.groupId));
+            const groupId = parseInt(el.dataset.groupId);
+            const minInput = document.querySelector(`.js-group-min[data-group-id="${groupId}"]`);
+
+            groupIds.push(groupId);
             operationIds.push(parseInt(el.value));
+
+            const minVal = minInput && minInput.value !== '' ? parseFloat(minInput.value) : null;
+            groupMinimums.push(minVal);
         });
 
         const elementIds = [];
         const przedmiotRodzajPoziomIds = [];
         const liczby = [];
+        const elementRequiredFlags = [];
+        const elementMinimums = [];
 
         document.querySelectorAll('.js-element-row').forEach(row => {
-            elementIds.push(parseInt(row.dataset.elementId));
-            przedmiotRodzajPoziomIds.push(parseInt(row.querySelector('.js-subject-value').value));
+            const elementId = parseInt(row.dataset.elementId);
+            const subjectId = parseInt(row.closest('.js-subject-block').querySelector('.js-subject-id').value);
+            const rodzajId = parseInt(row.querySelector('.js-rodzaj-id').value);
+            const poziomId = parseInt(row.querySelector('.js-poziom-id').value);
+
+            const combo = window.comboData.find(c =>
+                parseInt(c.subjectId) === subjectId &&
+                parseInt(c.rodzajId) === rodzajId &&
+                parseInt(c.poziomId) === poziomId
+            );
+
+            if (!combo) return;
+
+            elementIds.push(elementId);
+            przedmiotRodzajPoziomIds.push(parseInt(combo.id));
             liczby.push(parseFloat(row.querySelector('.js-multiplier').value || '0'));
+            elementRequiredFlags.push(!!row.querySelector('.js-required').checked);
+
+            const minInput = row.querySelector('.js-element-min');
+            const minVal = minInput && minInput.value !== '' ? parseFloat(minInput.value) : null;
+            elementMinimums.push(minVal);
         });
 
         const response = await fetch('/Algorytmy/SaveAllAjax', {
@@ -688,9 +829,12 @@
                 maturaId,
                 groupIds,
                 operationIds,
+                groupMinimums,
                 elementIds,
                 przedmiotRodzajPoziomIds,
-                liczby
+                liczby,
+                elementRequiredFlags,
+                elementMinimums
             })
         });
 
@@ -708,24 +852,24 @@
         setTimeout(() => toast.classList.remove('show'), 2200);
     }
 
-    function buildSubjectPickerHtml(selectedValue) {
-        const found = window.subjectOptionsData.find(x => x.value === selectedValue) || window.subjectOptionsData[0];
-        const optionsHtml = window.subjectOptionsData.map(opt =>
-            `<div class="subject-option ${opt.value === found.value ? 'active' : ''}" data-value="${opt.value}" data-label="${opt.label}">${opt.label}</div>`
+    function buildComboPickerHtml(selectedValue) {
+        const found = window.comboData.find(x => parseInt(x.id) === parseInt(selectedValue)) || window.comboData[0];
+        const optionsHtml = window.comboData.map(opt =>
+            `<div class="custom-picker-option ${parseInt(opt.id) === parseInt(found.id) ? 'active' : ''}" data-value="${opt.id}" data-label="${opt.label}">${opt.label}</div>`
         ).join('');
 
         return `
-            <div class="subject-picker">
-                <input type="hidden" class="js-subject-value" value="${found.value}" />
-                <button type="button" class="subject-trigger">
-                    <span class="subject-trigger-label">${found.label}</span>
+            <div class="custom-picker">
+                <input type="hidden" class="js-test-combo-id" value="${found.id}" />
+                <button type="button" class="custom-picker-trigger">
+                    <span class="custom-picker-label">${found.label}</span>
                     <span>▾</span>
                 </button>
-                <div class="subject-dropdown">
-                    <div class="subject-search-wrap">
-                        <input type="text" class="subject-search-input" placeholder="Szukaj przedmiotu..." />
+                <div class="custom-picker-dropdown">
+                    <div class="custom-picker-search-wrap">
+                        <input type="text" class="custom-picker-search" placeholder="Szukaj przedmiotu..." />
                     </div>
-                    <div class="subject-options">
+                    <div class="custom-picker-options">
                         ${optionsHtml}
                     </div>
                 </div>
@@ -741,7 +885,7 @@
         rows.innerHTML = '';
 
         addTestRow();
-        initSubjectPickers(modal);
+        initCustomPickers(modal);
 
         document.getElementById('testResult').classList.add('d-none');
         document.getElementById('testLines').innerHTML = '';
@@ -754,18 +898,18 @@
 
     function addTestRow() {
         const rows = document.getElementById('testRows');
-        const defaultValue = window.subjectOptionsData.length ? window.subjectOptionsData[0].value : 0;
+        const defaultValue = window.comboData.length ? window.comboData[0].id : 0;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'test-row js-test-row';
         wrapper.innerHTML = `
-            ${buildSubjectPickerHtml(defaultValue)}
+            ${buildComboPickerHtml(defaultValue)}
             <input type="number" step="0.01" class="form-control js-test-points" placeholder="Punkty" />
             <button type="button" class="btn btn-outline-danger" onclick="this.closest('.js-test-row').remove()">Usuń</button>
         `;
 
         rows.appendChild(wrapper);
-        initSubjectPickers(wrapper);
+        initCustomPickers(wrapper);
     }
 
     async function runAlgorithmTest() {
@@ -773,12 +917,12 @@
 
         const inputs = [];
         rows.forEach(row => {
-            const subjectId = parseInt(row.querySelector('.js-subject-value').value);
+            const comboId = parseInt(row.querySelector('.js-test-combo-id').value);
             const points = parseFloat(row.querySelector('.js-test-points').value || '0');
 
-            if (!isNaN(subjectId)) {
+            if (!isNaN(comboId)) {
                 inputs.push({
-                    przedmiotRodzajPoziomId: subjectId,
+                    przedmiotRodzajPoziomId: comboId,
                     punkty: points
                 });
             }
@@ -817,6 +961,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        initSubjectPickers(document);
+        initCustomPickers(document);
+        initSubjectBlocks(document);
     });
 </script>

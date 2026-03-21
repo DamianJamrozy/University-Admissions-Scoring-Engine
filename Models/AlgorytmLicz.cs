@@ -14,6 +14,11 @@ namespace University_Admissions_Scoring_Engine.Models
         [Column(TypeName = "decimal(10,2)")]
         public decimal Liczba { get; set; }
 
+        public bool CzyWymagany { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal? MinimalnePunkty { get; set; }
+
         public PrzedmiotRodzajPoziom? PrzedmiotRodzajPoziom { get; set; }
         public AlgorytmGrupa? AlgorytmGrupa { get; set; }
     }
