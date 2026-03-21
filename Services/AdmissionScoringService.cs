@@ -191,56 +191,81 @@ namespace University_Admissions_Scoring_Engine.Services
             bool requirementFailed = false;
             var candidates = new List<GroupEvaluationCandidate>();
 
-            foreach (var el in ownElements)
+            // KLUCZOWA ZMIANA:
+            // elementy grupujemy po przedmiocie i z jednego przedmiotu wybieramy najlepszą kombinację
+            var subjectBlocks = ownElements
+                .GroupBy(e => e.PrzedmiotRodzajPoziom!.PrzedmiotId)
+                .ToList();
+
+            foreach (var subjectBlock in subjectBlocks)
             {
-                var label = $"{el.PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa} / {el.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa} / {el.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa}";
-                var linePrefix = $"{indent}  - {label}";
-
-                var hasInput = inputs.TryGetValue(el.PrzedmiotRodzajPoziomId, out var rawPoints);
-
-                if (!hasInput)
+                var subjectName = subjectBlock.First().PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa ?? "-";
+                var blockLines = new List<string>
                 {
-                    if (el.CzyWymagany)
-                    {
-                        requirementFailed = true;
-                        groupLines.Add($"{linePrefix}: brak wyniku, a przedmiot jest wymagany.");
-                    }
-                    else
-                    {
-                        groupLines.Add($"{linePrefix}: brak wyniku, pominięto.");
-                    }
-
-                    continue;
-                }
-
-                if (el.MinimalnePunkty.HasValue && rawPoints < el.MinimalnePunkty.Value)
-                {
-                    if (el.CzyWymagany)
-                    {
-                        requirementFailed = true;
-                        groupLines.Add($"{linePrefix}: {rawPoints:0.##} < minimum {el.MinimalnePunkty.Value:0.##}, a przedmiot jest wymagany.");
-                    }
-                    else
-                    {
-                        groupLines.Add($"{linePrefix}: {rawPoints:0.##} < minimum {el.MinimalnePunkty.Value:0.##}, pominięto.");
-                    }
-
-                    continue;
-                }
-
-                var calculated = rawPoints * el.Liczba;
-
-                var localLines = new List<string>
-                {
-                    $"{linePrefix}: {rawPoints:0.##} × {el.Liczba:0.##} = {calculated:0.##}" +
-                    $"{(el.CzyWymagany ? " [wymagany]" : "")}" +
-                    $"{(el.MinimalnePunkty.HasValue ? $" [min {el.MinimalnePunkty.Value:0.##}]" : "")}"
+                    $"{indent}  Przedmiot: {subjectName}"
                 };
+
+                bool subjectRequired = subjectBlock.Any(x => x.CzyWymagany);
+                var validVariants = new List<GroupEvaluationCandidate>();
+
+                foreach (var el in subjectBlock)
+                {
+                    var label = $"{el.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa} / {el.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa}";
+                    var hasInput = inputs.TryGetValue(el.PrzedmiotRodzajPoziomId, out var rawPoints);
+
+                    if (!hasInput)
+                    {
+                        blockLines.Add($"{indent}    - {label}: brak wyniku");
+                        continue;
+                    }
+
+                    if (el.MinimalnePunkty.HasValue && rawPoints < el.MinimalnePunkty.Value)
+                    {
+                        blockLines.Add($"{indent}    - {label}: {rawPoints:0.##} < minimum {el.MinimalnePunkty.Value:0.##}");
+                        continue;
+                    }
+
+                    var calculated = rawPoints * el.Liczba;
+
+                    validVariants.Add(new GroupEvaluationCandidate
+                    {
+                        Points = calculated,
+                        Lines = new List<string>
+                        {
+                            $"{indent}    - {label}: {rawPoints:0.##} × {el.Liczba:0.##} = {calculated:0.##}" +
+                            $"{(el.CzyWymagany ? " [wymagany]" : "")}" +
+                            $"{(el.MinimalnePunkty.HasValue ? $" [min {el.MinimalnePunkty.Value:0.##}]" : "")}"
+                        }
+                    });
+                }
+
+                if (!validVariants.Any())
+                {
+                    if (subjectRequired)
+                    {
+                        requirementFailed = true;
+                        blockLines.Add($"{indent}    => brak poprawnej kombinacji dla wymaganego przedmiotu");
+                    }
+                    else
+                    {
+                        blockLines.Add($"{indent}    => brak poprawnej kombinacji, pominięto");
+                    }
+
+                    groupLines.AddRange(blockLines);
+                    continue;
+                }
+
+                var bestVariant = validVariants
+                    .OrderByDescending(x => x.Points)
+                    .First();
+
+                blockLines.Add($"{indent}    => wybrano najlepszą kombinację");
+                blockLines.AddRange(bestVariant.Lines);
 
                 candidates.Add(new GroupEvaluationCandidate
                 {
-                    Points = calculated,
-                    Lines = localLines
+                    Points = bestVariant.Points,
+                    Lines = blockLines
                 });
             }
 
