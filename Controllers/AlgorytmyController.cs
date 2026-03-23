@@ -158,24 +158,43 @@ namespace University_Admissions_Scoring_Engine.Controllers
             return Json(new { success = true });
         }
 
+        // NAPRAWIONE:
+        // + element dodaje nowy PRZEDMIOT do grupy, a nie kolejną kombinację do istniejącego przedmiotu
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddElementInlineAjax(int groupId)
         {
             var grupa = await _context.AlgorytmGrupy.FindAsync(groupId);
             if (grupa == null)
-                return Json(new { success = false });
+                return Json(new { success = false, message = "Nie znaleziono grupy." });
 
-            var first = await _context.PrzedmiotRodzajPoziomy
-                .OrderBy(x => x.PrzedmiotId)
-                .ThenBy(x => x.PrzedmiotRodzajId)
-                .ThenBy(x => x.PrzedmiotPoziomId)
-                .FirstAsync();
+            var usedSubjectIds = await _context.AlgorytmLicze
+                .Include(x => x.PrzedmiotRodzajPoziom)
+                .Where(x => x.AlgorytmGrupaId == groupId)
+                .Select(x => x.PrzedmiotRodzajPoziom!.PrzedmiotId)
+                .Distinct()
+                .ToListAsync();
+
+            var firstUnusedCombo = await _context.PrzedmiotRodzajPoziomy
+                .Where(x => !usedSubjectIds.Contains(x.PrzedmiotId))
+                .OrderBy(x => x.Przedmiot!.Nazwa)
+                .ThenBy(x => x.PrzedmiotRodzaj!.Nazwa)
+                .ThenBy(x => x.PrzedmiotPoziom!.Nazwa)
+                .FirstOrDefaultAsync();
+
+            if (firstUnusedCombo == null)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "W tej grupie zostały już wykorzystane wszystkie dostępne przedmioty."
+                });
+            }
 
             var element = new AlgorytmLicz
             {
                 AlgorytmGrupaId = groupId,
-                PrzedmiotRodzajPoziomId = first.IdPrzedmiotRodzajPoziom,
+                PrzedmiotRodzajPoziomId = firstUnusedCombo.IdPrzedmiotRodzajPoziom,
                 Liczba = 1m,
                 CzyWymagany = false,
                 MinimalnePunkty = null
@@ -193,21 +212,33 @@ namespace University_Admissions_Scoring_Engine.Controllers
         {
             var grupa = await _context.AlgorytmGrupy.FindAsync(groupId);
             if (grupa == null)
-                return Json(new { success = false });
+                return Json(new { success = false, message = "Nie znaleziono grupy." });
 
-            var first = await _context.PrzedmiotRodzajPoziomy
-                .Where(x => x.PrzedmiotId == subjectId)
-                .OrderBy(x => x.PrzedmiotRodzajId)
-                .ThenBy(x => x.PrzedmiotPoziomId)
+            var existingVariantIds = await _context.AlgorytmLicze
+                .Include(x => x.PrzedmiotRodzajPoziom)
+                .Where(x => x.AlgorytmGrupaId == groupId && x.PrzedmiotRodzajPoziom!.PrzedmiotId == subjectId)
+                .Select(x => x.PrzedmiotRodzajPoziomId)
+                .ToListAsync();
+
+            var nextVariant = await _context.PrzedmiotRodzajPoziomy
+                .Where(x => x.PrzedmiotId == subjectId && !existingVariantIds.Contains(x.IdPrzedmiotRodzajPoziom))
+                .OrderBy(x => x.PrzedmiotRodzaj!.Nazwa)
+                .ThenBy(x => x.PrzedmiotPoziom!.Nazwa)
                 .FirstOrDefaultAsync();
 
-            if (first == null)
-                return Json(new { success = false });
+            if (nextVariant == null)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Dla tego przedmiotu nie ma już więcej niewykorzystanych kombinacji do dodania."
+                });
+            }
 
             var element = new AlgorytmLicz
             {
                 AlgorytmGrupaId = groupId,
-                PrzedmiotRodzajPoziomId = first.IdPrzedmiotRodzajPoziom,
+                PrzedmiotRodzajPoziomId = nextVariant.IdPrzedmiotRodzajPoziom,
                 Liczba = 1m,
                 CzyWymagany = false,
                 MinimalnePunkty = null
@@ -225,7 +256,7 @@ namespace University_Admissions_Scoring_Engine.Controllers
         {
             var element = await _context.AlgorytmLicze.FirstOrDefaultAsync(e => e.IdAlgorytmLicz == elementId);
             if (element == null)
-                return Json(new { success = false });
+                return Json(new { success = false, message = "Nie znaleziono kombinacji." });
 
             _context.AlgorytmLicze.Remove(element);
             await _context.SaveChangesAsync();
@@ -243,7 +274,7 @@ namespace University_Admissions_Scoring_Engine.Controllers
                 .ToListAsync();
 
             if (!elements.Any())
-                return Json(new { success = false });
+                return Json(new { success = false, message = "Nie znaleziono przedmiotu w tej grupie." });
 
             _context.AlgorytmLicze.RemoveRange(elements);
             await _context.SaveChangesAsync();
@@ -257,7 +288,7 @@ namespace University_Admissions_Scoring_Engine.Controllers
         {
             var grupa = await _context.AlgorytmGrupy.FindAsync(groupId);
             if (grupa == null)
-                return Json(new { success = false });
+                return Json(new { success = false, message = "Nie znaleziono grupy." });
 
             var ids = await GetGroupBranch(groupId);
 

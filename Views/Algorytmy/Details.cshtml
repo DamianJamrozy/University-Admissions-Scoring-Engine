@@ -409,6 +409,10 @@
         display: block;
     }
 
+    .toast-box.error {
+        background: #dc3545;
+    }
+
     @@media (max-width: 992px) {
         .test-row {
             grid-template-columns: 1fr;
@@ -527,6 +531,14 @@
     function getAntiForgeryToken() {
         const tokenInput = document.querySelector('#antiForgeryHolder input[name="__RequestVerificationToken"]');
         return tokenInput ? tokenInput.value : '';
+    }
+
+    function showToast(text, isError = false) {
+        const toast = document.getElementById('saveToast');
+        toast.textContent = text;
+        toast.classList.toggle('error', isError);
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
     async function reloadWorkspace(algorytmId, maturaId) {
@@ -711,6 +723,8 @@
 
         if (result.success) {
             await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się dodać grupy.', true);
         }
     }
 
@@ -721,6 +735,8 @@
 
         if (result.success) {
             await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się dodać elementu.', true);
         }
     }
 
@@ -732,6 +748,8 @@
 
         if (result.success) {
             await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się dodać kombinacji.', true);
         }
     }
 
@@ -745,6 +763,8 @@
 
         if (result.success) {
             await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się usunąć przedmiotu.', true);
         }
     }
 
@@ -757,6 +777,8 @@
 
         if (result.success) {
             await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się usunąć kombinacji.', true);
         }
     }
 
@@ -769,6 +791,8 @@
 
         if (result.success) {
             await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się usunąć grupy.', true);
         }
     }
 
@@ -842,14 +866,9 @@
         if (result.success) {
             await reloadWorkspace(algorytmId, maturaId);
             showToast('Zapisano algorytm.');
+        } else {
+            showToast('Nie udało się zapisać algorytmu.', true);
         }
-    }
-
-    function showToast(text) {
-        const toast = document.getElementById('saveToast');
-        toast.textContent = text;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2200);
     }
 
     function buildComboPickerHtml(selectedValue) {
