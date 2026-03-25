@@ -23,5 +23,6 @@ namespace University_Admissions_Scoring_Engine.Models
 
         public ICollection<MaturaPrzedmiot> MaturaPrzedmioty { get; set; } = new List<MaturaPrzedmiot>();
         public ICollection<KandydatDyplom> KandydatDyplomy { get; set; } = new List<KandydatDyplom>();
+        public ICollection<AlgorytmMatura> AlgorytmyMatur { get; set; } = new List<AlgorytmMatura>();
     }
 }

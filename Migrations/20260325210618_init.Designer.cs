@@ -11,7 +11,7 @@ using University_Admissions_Scoring_Engine.Data;
 namespace University_Admissions_Scoring_Engine.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260325195138_init")]
+    [Migration("20260325210618_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -123,9 +123,14 @@ namespace University_Admissions_Scoring_Engine.Migrations
                     b.Property<int>("MaturaId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MaturaIdMatura")
+                        .HasColumnType("int");
+
                     b.HasKey("IdAlgorytmMatura");
 
                     b.HasIndex("MaturaId");
+
+                    b.HasIndex("MaturaIdMatura");
 
                     b.HasIndex("AlgorytmId", "MaturaId")
                         .IsUnique();
@@ -574,6 +579,10 @@ namespace University_Admissions_Scoring_Engine.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("University_Admissions_Scoring_Engine.Models.Matura", null)
+                        .WithMany("AlgorytmyMatur")
+                        .HasForeignKey("MaturaIdMatura");
+
                     b.Navigation("Algorytm");
 
                     b.Navigation("Matura");
@@ -764,6 +773,8 @@ namespace University_Admissions_Scoring_Engine.Migrations
 
             modelBuilder.Entity("University_Admissions_Scoring_Engine.Models.Matura", b =>
                 {
+                    b.Navigation("AlgorytmyMatur");
+
                     b.Navigation("KandydatDyplomy");
 
                     b.Navigation("MaturaPrzedmioty");

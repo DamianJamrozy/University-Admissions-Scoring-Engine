@@ -190,7 +190,8 @@ namespace University_Admissions_Scoring_Engine.Migrations
                     IdAlgorytmMatura = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     AlgorytmId = table.Column<int>(type: "int", nullable: false),
-                    MaturaId = table.Column<int>(type: "int", nullable: false)
+                    MaturaId = table.Column<int>(type: "int", nullable: false),
+                    MaturaIdMatura = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -207,6 +208,11 @@ namespace University_Admissions_Scoring_Engine.Migrations
                         principalTable: "Matura",
                         principalColumn: "IdMatura",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AlgorytmMatura_Matura_MaturaIdMatura",
+                        column: x => x.MaturaIdMatura,
+                        principalTable: "Matura",
+                        principalColumn: "IdMatura");
                 });
 
             migrationBuilder.CreateTable(
@@ -467,6 +473,11 @@ namespace University_Admissions_Scoring_Engine.Migrations
                 name: "IX_AlgorytmMatura_MaturaId",
                 table: "AlgorytmMatura",
                 column: "MaturaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlgorytmMatura_MaturaIdMatura",
+                table: "AlgorytmMatura",
+                column: "MaturaIdMatura");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Kandydat_Email",
