@@ -73,6 +73,7 @@ Projekt został zbudowany w technologii:
   - Przyjęty
   - Lista rezerwowa
   - Niezakwalifikowany
+  - Kierunek nie został uruchomiony
 - Sortowanie według punktów
 - Dynamiczna aktualizacja wyników
 
@@ -102,6 +103,7 @@ Projekt oparty jest na architekturze MVC:
 1. Otwórz projekt w Visual Studio
 2. Wykonaj migracje:
    ```
+   Add-Migration Init
    Update-Database
    ```
 3. Uruchom aplikację (`F5`)
@@ -193,6 +195,7 @@ Built with:
   - Accepted
   - Waiting list
   - Rejected
+  - The field of study has not been launched
 - Sorted by score
 - Dynamic updates
 
@@ -222,6 +225,7 @@ The project follows MVC architecture:
 1. Open in Visual Studio
 2. Run:
    ```
+   Add-Migration Init
    Update-Database
    ```
 3. Start the app (`F5`)
