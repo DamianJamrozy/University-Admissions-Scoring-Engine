@@ -388,7 +388,22 @@ namespace University_Admissions_Scoring_Engine.Services
             var przyjety = statusy.First(s => s.Nazwa == "Przyjęty");
             var rezerwowa = statusy.First(s => s.Nazwa == "Lista rezerwowa");
             var odrzucony = statusy.First(s => s.Nazwa == "Niezakwalifikowany");
+            var nieUruchomiony = statusy.First(s => s.Nazwa == "Kierunek nie został uruchomiony");
 
+            // JEŻELI NIE SPEŁNIAJĄ KRYTERIÓW MINIMALNEJ LICZBY PRZYJĘĆ, TO WSZYSTKIE OSOBY SĄ ODRZUCANE (LUB NIEURUCHOMIONE)
+            if (lista.Count < kierunek.MinPrzyjetych)
+            {
+                foreach (var item in lista)
+                {
+                    item.Ranking = null;
+                    item.StatusId = nieUruchomiony.IdStatus;
+                }
+
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+            // JEŻELI SPEŁNIAJĄ KRYTERIA MINIMALNEJ LICZBY PRZYJĘĆ, TO PRZYZNAJEMY RANKING I STATUSY
             for (int i = 0; i < lista.Count; i++)
             {
                 var item = lista[i];

@@ -11,8 +11,8 @@ using University_Admissions_Scoring_Engine.Data;
 namespace University_Admissions_Scoring_Engine.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260321201503_MakeKierunekAlgorytmNullable")]
-    partial class MakeKierunekAlgorytmNullable
+    [Migration("20260325195138_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

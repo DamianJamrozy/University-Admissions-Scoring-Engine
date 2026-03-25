@@ -55,6 +55,13 @@
     <a asp-action="Index" class="btn btn-dark">Powrót</a>
 </div>
 
+@if (Model.LiczbaKandydatow < Model.Kierunek.MinPrzyjetych)
+{
+    <div class="alert alert-warning">
+        Kierunek nie został uruchomiony – za mało kandydatów.
+    </div>
+}
+
 <table class="table table-bordered table-striped align-middle">
     <thead>
         <tr>

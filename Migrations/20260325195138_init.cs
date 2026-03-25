@@ -5,7 +5,7 @@
 namespace University_Admissions_Scoring_Engine.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -152,13 +152,13 @@ namespace University_Admissions_Scoring_Engine.Migrations
                 {
                     IdKierunek = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Nazwa = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Nazwa = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TrybId = table.Column<int>(type: "int", nullable: false),
                     RodzajId = table.Column<int>(type: "int", nullable: false),
                     MinPrzyjetych = table.Column<int>(type: "int", nullable: false),
                     MaxPrzyjetych = table.Column<int>(type: "int", nullable: false),
                     MaxListaRezerwowa = table.Column<int>(type: "int", nullable: false),
-                    AlgorytmId = table.Column<int>(type: "int", nullable: false)
+                    AlgorytmId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -314,6 +314,7 @@ namespace University_Admissions_Scoring_Engine.Migrations
                     AlgorytmMaturaId = table.Column<int>(type: "int", nullable: false),
                     RodzicId = table.Column<int>(type: "int", nullable: true),
                     AlgorytmOperacjaId = table.Column<int>(type: "int", nullable: false),
+                    MinimalnePunkty = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
                     AlgorytmOperacjaIdAlgorytmOperacja = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -405,7 +406,9 @@ namespace University_Admissions_Scoring_Engine.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PrzedmiotRodzajPoziomId = table.Column<int>(type: "int", nullable: false),
                     AlgorytmGrupaId = table.Column<int>(type: "int", nullable: false),
-                    Liczba = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
+                    Liczba = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    CzyWymagany = table.Column<bool>(type: "bit", nullable: false),
+                    MinimalnePunkty = table.Column<decimal>(type: "decimal(10,2)", nullable: true)
                 },
                 constraints: table =>
                 {

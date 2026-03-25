@@ -24,7 +24,8 @@ namespace University_Admissions_Scoring_Engine.Data
                 context.Statusy.AddRange(
                     new Status { Nazwa = "Przyjęty" },
                     new Status { Nazwa = "Lista rezerwowa" },
-                    new Status { Nazwa = "Niezakwalifikowany" }
+                    new Status { Nazwa = "Niezakwalifikowany" },
+                    new Status { Nazwa = "Kierunek nie został uruchomiony" }
                 );
 
                 await context.SaveChangesAsync();
@@ -345,7 +346,7 @@ namespace University_Admissions_Scoring_Engine.Data
                         Nazwa = "Informatyka",
                         TrybId = trybStacjonarne.IdTryb,
                         RodzajId = rodzaj1Stopnia.IdRodzaj,
-                        MinPrzyjetych = 10,
+                        MinPrzyjetych = 4,
                         MaxPrzyjetych = 120,
                         MaxListaRezerwowa = 50,
                         AlgorytmId = algorytm1.IdAlgorytm

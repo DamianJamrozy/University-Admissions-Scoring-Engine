@@ -1,0 +1,61 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.KierunekFormViewModel
+
+<h1>Edytuj kierunek</h1>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input asp-for="IdKierunek" type="hidden" />
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="mb-3">
+        <label asp-for="Nazwa" class="form-label"></label>
+        <input asp-for="Nazwa" class="form-control" />
+        <span asp-validation-for="Nazwa" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="TrybId" class="form-label"></label>
+        <select asp-for="TrybId" asp-items="Model.Tryby" class="form-select"></select>
+        <span asp-validation-for="TrybId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="RodzajId" class="form-label"></label>
+        <select asp-for="RodzajId" asp-items="Model.Rodzaje" class="form-select"></select>
+        <span asp-validation-for="RodzajId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MinPrzyjetych" class="form-label"></label>
+        <input asp-for="MinPrzyjetych" class="form-control" />
+        <span asp-validation-for="MinPrzyjetych" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MaxPrzyjetych" class="form-label"></label>
+        <input asp-for="MaxPrzyjetych" class="form-control" />
+        <span asp-validation-for="MaxPrzyjetych" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MaxListaRezerwowa" class="form-label"></label>
+        <input asp-for="MaxListaRezerwowa" class="form-control" />
+        <span asp-validation-for="MaxListaRezerwowa" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="AlgorytmId" class="form-label"></label>
+        <select asp-for="AlgorytmId" asp-items="Model.Algorytmy" class="form-select"></select>
+        <span asp-validation-for="AlgorytmId" class="text-danger"></span>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success">Zapisz zmiany</button>
+        <a asp-action="Index" class="btn btn-secondary">Powrót</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
