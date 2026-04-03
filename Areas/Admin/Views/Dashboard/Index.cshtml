@@ -1,0 +1,59 @@
+﻿@model University_Admissions_Scoring_Engine.Areas.Admin.ViewModels.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="admin-dashboard-hero">
+    <div class="admin-dashboard-hero-content">
+        <div class="admin-dashboard-kicker">University Admissions Scoring Engine</div>
+        <h2>@Model.Title</h2>
+        <p>@Model.Subtitle</p>
+    </div>
+</div>
+
+@foreach (var dashboardSection in Model.Sections)
+{
+    <section class="admin-section">
+        <div class="admin-section-header">
+            <div>
+                <h3>@dashboardSection.Title</h3>
+                <p>@dashboardSection.Description</p>
+            </div>
+        </div>
+
+        <div class="admin-card-grid">
+            @foreach (var card in dashboardSection.Cards)
+            {
+                var cardClass = card.IsEnabled ? "admin-module-card" : "admin-module-card admin-module-card-disabled";
+
+                if (card.IsEnabled)
+                {
+                    <a href="@card.Url" class="@cardClass">
+                        <div class="admin-module-card-top">
+                            <div class="admin-module-icon">
+                                <i class="bi @card.Icon"></i>
+                            </div>
+                            <span class="admin-badge">@card.Badge</span>
+                        </div>
+                        <h4>@card.Title</h4>
+                        <p>@card.Description</p>
+                    </a>
+                }
+                else
+                {
+                    <div class="@cardClass">
+                        <div class="admin-module-card-top">
+                            <div class="admin-module-icon">
+                                <i class="bi @card.Icon"></i>
+                            </div>
+                            <span class="admin-badge admin-badge-muted">@card.Badge</span>
+                        </div>
+                        <h4>@card.Title</h4>
+                        <p>@card.Description</p>
+                    </div>
+                }
+            }
+        </div>
+    </section>
+}

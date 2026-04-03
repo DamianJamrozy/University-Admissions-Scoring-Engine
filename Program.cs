@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using University_Admissions_Scoring_Engine.Data;
 using University_Admissions_Scoring_Engine.Services;
 
@@ -14,7 +14,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Nasz silnik liczenia punkt�w
+// Nasz silnik liczenia punktów
 builder.Services.AddScoped<AdmissionScoringService>();
 
 var app = builder.Build();
@@ -34,6 +34,10 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+else
+{
+    app.UseDeveloperExceptionPage(); // ważne przy debugowaniu
+}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -42,7 +46,16 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-// Routing
+// ==========================
+// ROUTING
+// ==========================
+
+// KLUCZOWE: obsługa Areas (np. /admin)
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+
+// Standardowy routing
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
