@@ -1,10 +1,94 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Wybór panelu";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Cześć!</h1>
-    <p>Nazywam się Damian Jamroży, a oto program obsługujący mikro proces związany z rekrutaacją na studia. Zapoznaj się z dokumentacją projektu na <a href="https://github.com/DamianJamrozy/University-Admissions-Scoring-Engine" target="_blank">githubie</a>.</p>
-    <!-- https://learn.microsoft.com/aspnet/core -->
-    <a href="Algorytmy">Przejdź do zarządzania algorytmami.</a>
+<style>
+    .entry-wrapper {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .entry-grid {
+        width: 100%;
+        max-width: 900px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+    }
+
+    .entry-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 220px;
+        border-radius: 20px;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        text-decoration: none;
+        color: #0f172a;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+        transition: all 0.2s ease;
+    }
+
+        .entry-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+            border-color: rgba(37, 99, 235, 0.4);
+            text-decoration: none;
+            color: #0f172a;
+        }
+
+    .entry-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: #fff;
+        margin-bottom: 16px;
+    }
+
+    .candidate-icon {
+        background: linear-gradient(135deg, #1e293b, #334155);
+    }
+
+    .admin-icon {
+        background: linear-gradient(135deg, #2563eb, #06b6d4);
+    }
+
+    .entry-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    @@media (max-width: 768px) {
+        .entry-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="entry-wrapper">
+    <div class="entry-grid">
+
+        <!-- Kandydat -->
+        <a asp-controller="Home" asp-action="Privacy" class="entry-card">
+            <div class="entry-icon candidate-icon">K</div>
+            <div class="entry-title">Panel kandydata</div>
+        </a>
+
+        <!-- Admin -->
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="entry-card">
+            <div class="entry-icon admin-icon">A</div>
+            <div class="entry-title">Panel administratora</div>
+        </a>
+
+    </div>
 </div>
