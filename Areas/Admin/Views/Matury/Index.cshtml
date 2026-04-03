@@ -1,0 +1,53 @@
+﻿@model List<University_Admissions_Scoring_Engine.Models.Matura>
+
+<h1>Matury</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Dodaj maturę</a>
+</p>
+
+<table class="table table-bordered align-middle">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nazwa</th>
+            <th>Skala od</th>
+            <th>Skala do</th>
+            <th>Skok</th>
+            <th style="width:320px;">Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.IdMatura</td>
+                <td>@item.Nazwa</td>
+                <td>@item.SkalaOd</td>
+                <td>@item.SkalaDo</td>
+                <td>@item.SkalaUnit</td>
+                <td>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-action="Edit" asp-route-id="@item.IdMatura" class="btn btn-sm btn-outline-primary">Edytuj</a>
+                        <a asp-action="AssignSubjects" asp-route-id="@item.IdMatura" class="btn btn-sm btn-outline-secondary">Przedmioty</a>
+
+                        <form asp-action="Delete" method="post" onsubmit="return confirm('Usunąć maturę?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.IdMatura" />
+                            <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

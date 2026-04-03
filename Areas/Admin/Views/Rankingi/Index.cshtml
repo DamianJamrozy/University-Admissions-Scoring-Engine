@@ -1,0 +1,54 @@
+﻿@model List<University_Admissions_Scoring_Engine.Models.Kierunek>
+
+<h1>Rankingi</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<table class="table table-bordered align-middle">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Kierunek</th>
+            <th>Tryb</th>
+            <th>Rodzaj</th>
+            <th>Algorytm</th>
+            <th>Liczba kandydatów</th>
+            <th style="width: 220px;">Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var k in Model)
+        {
+            <tr>
+                <td>@k.IdKierunek</td>
+                <td>@k.Nazwa</td>
+                <td>@k.Tryb?.Nazwa</td>
+                <td>@k.Rodzaj?.Nazwa</td>
+                <td>
+                    @if (k.Algorytm != null)
+                    {
+                        @($"{k.Algorytm.Nazwa} ({k.Algorytm.IdAlgorytm})")
+                    }
+                    else
+                    {
+                        <span>Brak</span>
+                    }
+                </td>
+                <td>@k.KandydatKierunki.Count</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@k.IdKierunek" class="btn btn-sm btn-primary">
+                        Szczegóły
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

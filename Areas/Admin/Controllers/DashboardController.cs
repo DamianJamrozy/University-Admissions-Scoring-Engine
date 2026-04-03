@@ -4,11 +4,8 @@ using University_Admissions_Scoring_Engine.Areas.Admin.ViewModels;
 namespace University_Admissions_Scoring_Engine.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Route("admin")]
     public class DashboardController : Controller
     {
-        [HttpGet("")]
-        [HttpGet("dashboard")]
         public IActionResult Index()
         {
             var vm = new AdminDashboardViewModel
@@ -27,55 +24,60 @@ namespace University_Admissions_Scoring_Engine.Areas.Admin.Controllers
                             {
                                 Title = "Algorytmy",
                                 Description = "Zarządzanie algorytmami punktacji, strukturą grup i testowaniem logiki.",
-                                Url = "/Algorytmy",
+                                Url = "/Admin/Algorytmy",
                                 Badge = "Aktywne",
-                                Icon = "bi-diagram-3"
+                                Icon = "bi-diagram-3",
+                                IsEnabled = true
                             },
                             new AdminDashboardCardViewModel
                             {
                                 Title = "Kierunki",
                                 Description = "Pełny CRUD kierunków, limity, przypisanie algorytmów i parametry naboru.",
-                                Url = "/Kierunki",
+                                Url = "/Admin/Kierunki",
                                 Badge = "Aktywne",
-                                Icon = "bi-mortarboard"
+                                Icon = "bi-mortarboard",
+                                IsEnabled = true
                             },
                             new AdminDashboardCardViewModel
                             {
                                 Title = "Matury",
                                 Description = "Zarządzanie typami matur, skalami punktowymi i ich konfiguracją.",
-                                Url = "/Matury",
+                                Url = "/Admin/Matury",
                                 Badge = "Aktywne",
-                                Icon = "bi-journal-check"
+                                Icon = "bi-journal-check",
+                                IsEnabled = true
                             },
                             new AdminDashboardCardViewModel
                             {
                                 Title = "Przedmioty",
                                 Description = "Obsługa przedmiotów, wariantów oraz przypisań do matur.",
-                                Url = "/Przedmioty",
+                                Url = "/Admin/Przedmioty",
                                 Badge = "Aktywne",
-                                Icon = "bi-book"
+                                Icon = "bi-book",
+                                IsEnabled = true
                             },
                             new AdminDashboardCardViewModel
                             {
                                 Title = "Rankingi",
                                 Description = "Przeliczanie punktów, generowanie rankingów i statusów kandydatów.",
-                                Url = "/Rankingi",
+                                Url = "/Admin/Rankingi",
                                 Badge = "Aktywne",
-                                Icon = "bi-bar-chart-line"
+                                Icon = "bi-bar-chart-line",
+                                IsEnabled = true
                             }
                         }
                     },
                     new AdminDashboardSectionViewModel
                     {
                         Title = "Moduły do rozwoju",
-                        Description = "Obszary wynikające bezpośrednio z Twojej docelowej wizji systemu.",
+                        Description = "Obszary wynikające bezpośrednio z docelowej wizji systemu.",
                         Cards = new List<AdminDashboardCardViewModel>
                         {
                             new AdminDashboardCardViewModel
                             {
                                 Title = "CMS treści",
                                 Description = "Drzewiasta struktura stron, widoczność, wersje językowe, artykuły, sekcje i multimedia.",
-                                Url = "/admin/cms",
+                                Url = "#",
                                 Badge = "Planowany",
                                 Icon = "bi-folder2-open",
                                 IsEnabled = false
@@ -84,7 +86,7 @@ namespace University_Admissions_Scoring_Engine.Areas.Admin.Controllers
                             {
                                 Title = "Formularze kandydatów",
                                 Description = "Dynamiczne formularze rejestracji, danych osobowych i zapisów na kierunki.",
-                                Url = "/admin/forms",
+                                Url = "#",
                                 Badge = "Planowany",
                                 Icon = "bi-ui-checks-grid",
                                 IsEnabled = false
@@ -93,7 +95,7 @@ namespace University_Admissions_Scoring_Engine.Areas.Admin.Controllers
                             {
                                 Title = "Języki systemu",
                                 Description = "Aktywacja wersji językowych i zarządzanie dostępnymi tłumaczeniami.",
-                                Url = "/admin/languages",
+                                Url = "#",
                                 Badge = "Planowany",
                                 Icon = "bi-translate",
                                 IsEnabled = false
@@ -102,7 +104,7 @@ namespace University_Admissions_Scoring_Engine.Areas.Admin.Controllers
                             {
                                 Title = "Informator kierunków",
                                 Description = "Edycja treści informatora, sekcji, multimediów i danych powiązanych z kierunkiem.",
-                                Url = "/admin/informators",
+                                Url = "#",
                                 Badge = "Planowany",
                                 Icon = "bi-file-earmark-richtext",
                                 IsEnabled = false
@@ -111,7 +113,7 @@ namespace University_Admissions_Scoring_Engine.Areas.Admin.Controllers
                             {
                                 Title = "Akceptacja zdjęć",
                                 Description = "Weryfikacja zdjęć do legitymacji, odrzucenie, akceptacja i komunikaty do kandydata.",
-                                Url = "/admin/photos",
+                                Url = "#",
                                 Badge = "Planowany",
                                 Icon = "bi-person-bounding-box",
                                 IsEnabled = false
@@ -121,7 +123,7 @@ namespace University_Admissions_Scoring_Engine.Areas.Admin.Controllers
                     new AdminDashboardSectionViewModel
                     {
                         Title = "Bezpieczeństwo i jakość",
-                        Description = "Założenia architektoniczne, które będą prowadzić dalszy rozwój panelu.",
+                        Description = "Założenia architektoniczne prowadzące dalszy rozwój panelu.",
                         Cards = new List<AdminDashboardCardViewModel>
                         {
                             new AdminDashboardCardViewModel

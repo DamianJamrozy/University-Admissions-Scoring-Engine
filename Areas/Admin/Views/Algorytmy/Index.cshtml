@@ -1,0 +1,57 @@
+﻿@model List<University_Admissions_Scoring_Engine.Models.Algorytm>
+
+<h1>Algorytmy</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Dodaj algorytm</a>
+</p>
+
+<table class="table table-bordered align-middle">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nazwa</th>
+            <th style="width: 420px;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.IdAlgorytm</td>
+                <td>@item.Nazwa</td>
+                <td>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-action="Details"
+                           asp-route-id="@item.IdAlgorytm"
+                           class="btn btn-sm btn-secondary">
+                            Szczegóły
+                        </a>
+
+                        <a asp-action="AssignToKierunki"
+                           asp-route-id="@item.IdAlgorytm"
+                           class="btn btn-sm btn-outline-primary">
+                            Przypisz do kierunków
+                        </a>
+
+                        <form asp-action="Delete" method="post" onsubmit="return confirm('Usunąć cały algorytm?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.IdAlgorytm" />
+                            <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

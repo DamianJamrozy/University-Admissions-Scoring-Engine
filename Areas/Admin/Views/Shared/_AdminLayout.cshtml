@@ -10,8 +10,11 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
 </head>
+
 <body class="admin-body">
     <div class="admin-shell">
+
+        <!-- SIDEBAR -->
         <aside class="admin-sidebar">
             <div class="admin-brand">
                 <div class="admin-brand-icon">
@@ -24,40 +27,48 @@
             </div>
 
             <nav class="admin-nav">
-                <a class="admin-nav-link" href="/admin">
+
+                <!-- DASHBOARD -->
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="admin-nav-link">
                     <i class="bi bi-grid-1x2-fill"></i>
                     <span>Dashboard</span>
                 </a>
 
                 <div class="admin-nav-group-title">Moduły</div>
 
-                <a class="admin-nav-link" href="/Algorytmy">
+                <!-- ALGORYTMY -->
+                <a asp-area="Admin" asp-controller="Algorytmy" asp-action="Index" class="admin-nav-link">
                     <i class="bi bi-diagram-3"></i>
                     <span>Algorytmy</span>
                 </a>
 
-                <a class="admin-nav-link" href="/Kierunki">
+                <!-- KIERUNKI -->
+                <a asp-area="Admin" asp-controller="Kierunki" asp-action="Index" class="admin-nav-link">
                     <i class="bi bi-mortarboard"></i>
                     <span>Kierunki</span>
                 </a>
 
-                <a class="admin-nav-link" href="/Matury">
+                <!-- MATURY -->
+                <a asp-area="Admin" asp-controller="Matury" asp-action="Index" class="admin-nav-link">
                     <i class="bi bi-journal-check"></i>
                     <span>Matury</span>
                 </a>
 
-                <a class="admin-nav-link" href="/Przedmioty">
+                <!-- PRZEDMIOTY -->
+                <a asp-area="Admin" asp-controller="Przedmioty" asp-action="Index" class="admin-nav-link">
                     <i class="bi bi-book"></i>
                     <span>Przedmioty</span>
                 </a>
 
-                <a class="admin-nav-link" href="/Rankingi">
+                <!-- RANKINGI -->
+                <a asp-area="Admin" asp-controller="Rankingi" asp-action="Index" class="admin-nav-link">
                     <i class="bi bi-bar-chart-line"></i>
                     <span>Rankingi</span>
                 </a>
 
                 <div class="admin-nav-group-title">Rozwój</div>
 
+                <!-- PLANOWANE (nie ruszamy!) -->
                 <a class="admin-nav-link disabled" href="javascript:void(0)">
                     <i class="bi bi-folder2-open"></i>
                     <span>CMS treści</span>
@@ -82,32 +93,53 @@
                     <i class="bi bi-person-bounding-box"></i>
                     <span>Akceptacja zdjęć</span>
                 </a>
+
             </nav>
         </aside>
 
+        <!-- MAIN -->
         <div class="admin-main">
+
+            <!-- TOPBAR -->
             <header class="admin-topbar">
                 <div>
                     <h1 class="admin-topbar-title">@ViewData["Title"]</h1>
-                    <div class="admin-topbar-subtitle">Bezpieczne zarządzanie systemem rekrutacji</div>
+                    <div class="admin-topbar-subtitle">
+                        Bezpieczne zarządzanie systemem rekrutacji
+                    </div>
                 </div>
 
                 <div class="admin-topbar-actions">
-                    <a href="/" class="btn btn-outline-light btn-sm">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light btn-sm">
                         <i class="bi bi-house-door me-1"></i> Strona główna
                     </a>
                 </div>
             </header>
 
+            <!-- CONTENT -->
             <main class="admin-content">
                 @RenderBody()
             </main>
+
+            <!-- FOOTER -->
+            <footer class="admin-footer mt-4 text-center">
+                <div>
+                    © @DateTime.Now.Year
+                    <a href="https://github.com/DamianJamrozy" target="_blank" rel="noopener noreferrer">
+                        Damian Jamroży
+                    </a>
+                    — Wszystkie prawa zastrzeżone.
+                </div>
+            </footer>
+
         </div>
     </div>
 
+    <!-- SCRIPTS -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

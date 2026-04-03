@@ -1,0 +1,94 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+
+@{
+    var children = Model.AllGroups
+        .Where(x => x.RodzicId == Model.CurrentGroup.IdAlgorytmGrupa)
+        .OrderBy(x => x.IdAlgorytmGrupa)
+        .ToList();
+
+    var elements = Model.AllElements
+        .Where(x => x.AlgorytmGrupaId == Model.CurrentGroup.IdAlgorytmGrupa)
+        .ToList();
+
+    var subjectBlocks = elements
+        .GroupBy(x => x.PrzedmiotRodzajPoziom!.PrzedmiotId)
+        .OrderBy(g => g.First().PrzedmiotRodzajPoziom!.Przedmiot!.Nazwa)
+        .ToList();
+
+    var currentNo = Model.GroupNumbers[Model.CurrentGroup.IdAlgorytmGrupa];
+    int? parentNo = null;
+
+    if (Model.CurrentGroup.RodzicId.HasValue && Model.GroupNumbers.ContainsKey(Model.CurrentGroup.RodzicId.Value))
+    {
+        parentNo = Model.GroupNumbers[Model.CurrentGroup.RodzicId.Value];
+    }
+
+    var cssClass = Model.IsRoot ? "preview-node root" : "preview-node";
+}
+
+<div class="@cssClass">
+    <div class="preview-card">
+        <div class="preview-head">
+            <span class="group-op-badge">@Model.CurrentGroup.AlgorytmOperacja?.Nazwa</span>
+            <span class="group-number">Grupa @currentNo</span>
+
+            @if (parentNo != null)
+            {
+                <span class="group-parent">| rodzic: grupa @parentNo</span>
+            }
+
+            @if (Model.CurrentGroup.MinimalnePunkty.HasValue)
+            {
+                <span class="group-parent">| min grupy: @Model.CurrentGroup.MinimalnePunkty.Value</span>
+            }
+        </div>
+
+        @if (subjectBlocks.Any())
+        {
+            <div class="preview-elements">
+                @foreach (var subjectBlock in subjectBlocks)
+                {
+                    var subjectName = subjectBlock.First().PrzedmiotRodzajPoziom?.Przedmiot?.Nazwa ?? "-";
+
+                    <div class="preview-element">
+                        <div><strong>@subjectName</strong></div>
+
+                        @foreach (var e in subjectBlock.OrderBy(x => x.PrzedmiotRodzajPoziom!.PrzedmiotRodzaj!.Nazwa)
+                                        .ThenBy(x => x.PrzedmiotRodzajPoziom!.PrzedmiotPoziom!.Nazwa))
+                        {
+                            <div>
+                                - @e.PrzedmiotRodzajPoziom?.PrzedmiotRodzaj?.Nazwa /
+                                @e.PrzedmiotRodzajPoziom?.PrzedmiotPoziom?.Nazwa
+                                | mnożnik: <strong>@e.Liczba</strong>
+                                @if (e.CzyWymagany)
+                                {
+                                    <span>| wymagany</span>
+                                }
+                                @if (e.MinimalnePunkty.HasValue)
+                                {
+                                    <span>| min: @e.MinimalnePunkty.Value</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @foreach (var child in children)
+        {
+            @await Html.PartialAsync("_AlgorytmPreviewNode", new University_Admissions_Scoring_Engine.ViewModels.AlgorytmGroupTreeNodeViewModel
+            {
+                CurrentGroup = child,
+                AllGroups = Model.AllGroups,
+                AllElements = Model.AllElements,
+                Operacje = Model.Operacje,
+                PrzedmiotOpcje = Model.PrzedmiotOpcje,
+                AlgorytmId = Model.AlgorytmId,
+                AlgorytmMaturaId = Model.AlgorytmMaturaId,
+                IsRoot = false,
+                GroupNumbers = Model.GroupNumbers
+                })
+                }
+    </div>
+</div>

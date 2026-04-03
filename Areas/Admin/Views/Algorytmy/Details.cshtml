@@ -1,0 +1,986 @@
+﻿@model University_Admissions_Scoring_Engine.ViewModels.AlgorytmEditorViewModel
+@using System.Text.Json
+
+<style>
+    .alg-page {
+        max-width: 1450px;
+        margin: 0 auto;
+    }
+
+    .alg-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+
+    .alg-title-wrap h1 {
+        margin-bottom: 6px;
+    }
+
+    .alg-title-wrap .sub {
+        color: #6c757d;
+        font-size: 0.95rem;
+    }
+
+    .alg-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .matura-switch {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 18px 0 24px 0;
+    }
+
+    .matura-link {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 999px;
+        text-decoration: none;
+        border: 1px solid #cfd8e3;
+        background: #fff;
+        color: #1f2d3d;
+        font-weight: 600;
+        transition: 0.2s ease;
+    }
+
+    .matura-link:hover {
+        background: #f3f7fb;
+        text-decoration: none;
+    }
+
+    .matura-link.active {
+        background: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+
+    .panel-box {
+        background: #f8fafc;
+        border: 1px solid #dbe4ee;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    }
+
+    .panel-box h3 {
+        margin-bottom: 18px;
+    }
+
+    .empty-state {
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px dashed #c9d3df;
+        color: #6c757d;
+        background: #fff;
+    }
+
+    .tree {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .group {
+        position: relative;
+        margin-left: 28px;
+        padding-left: 24px;
+        border-left: 2px dashed #c7d2de;
+    }
+
+    .group.root {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+    }
+
+    .group-card {
+        background: #fff;
+        border: 1px solid #d9e2ec;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+
+    .group-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .group-number {
+        font-size: 1.08rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .group-parent {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .group-op-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 999px;
+        background: #2563eb;
+        color: #fff;
+        font-size: 0.86rem;
+        font-weight: 700;
+    }
+
+    .group-toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .group-operation-row {
+        margin-bottom: 14px;
+    }
+
+    .elements-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .element-card {
+        border: 1px solid #d9e8ff;
+        background: #f8fbff;
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .element-actions-right {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .children-wrap {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .preview-node {
+        position: relative;
+        margin-left: 28px;
+        padding-left: 24px;
+        border-left: 2px dashed #c7d2de;
+        margin-top: 12px;
+    }
+
+    .preview-node.root {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+    }
+
+    .preview-card {
+        background: #fff;
+        border: 1px solid #d9e2ec;
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .preview-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+
+    .preview-elements {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .preview-element {
+        background: #f8fbff;
+        border: 1px solid #d9e8ff;
+        border-radius: 10px;
+        padding: 8px 10px;
+    }
+
+    .sticky-save {
+        position: sticky;
+        top: 12px;
+        z-index: 10;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .custom-picker {
+        position: relative;
+    }
+
+    .custom-picker-trigger {
+        width: 100%;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .custom-picker-label {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .custom-picker-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+        overflow: hidden;
+    }
+
+    .custom-picker-dropdown.open {
+        display: block;
+    }
+
+    .custom-picker-search-wrap {
+        padding: 10px;
+        border-bottom: 1px solid #eef2f7;
+        background: #f8fafc;
+    }
+
+    .custom-picker-search {
+        width: 100%;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        padding: 8px 10px;
+        outline: none;
+    }
+
+    .custom-picker-options {
+        max-height: 260px;
+        overflow: auto;
+    }
+
+    .custom-picker-option {
+        padding: 10px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .custom-picker-option:hover,
+    .custom-picker-option.active {
+        background: #eef6ff;
+    }
+
+    .custom-picker-option.hidden {
+        display: none;
+    }
+
+    .test-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+        padding: 24px;
+    }
+
+    .test-modal-backdrop.open {
+        display: flex;
+    }
+
+    .test-modal {
+        width: min(1100px, 100%);
+        max-height: 90vh;
+        overflow: auto;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+        border: 1px solid #dbe4ee;
+    }
+
+    .test-modal-header,
+    .test-modal-footer {
+        padding: 18px 22px;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .test-modal-footer {
+        border-top: 1px solid #eef2f7;
+        border-bottom: none;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .test-modal-body {
+        padding: 22px;
+    }
+
+    .test-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .test-row {
+        display: grid;
+        grid-template-columns: minmax(420px, 1fr) 140px 140px;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .test-result {
+        border: 1px solid #dbe4ee;
+        border-radius: 14px;
+        background: #f8fafc;
+        padding: 16px;
+    }
+
+    .test-score {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    .test-lines {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .toast-box {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 5000;
+        background: #198754;
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        display: none;
+    }
+
+    .toast-box.show {
+        display: block;
+    }
+
+    .toast-box.error {
+        background: #dc3545;
+    }
+
+    @@media (max-width: 992px) {
+        .test-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="alg-page">
+    <div id="antiForgeryHolder" class="d-none">
+        @Html.AntiForgeryToken()
+    </div>
+
+    <script id="subjects-json" type="application/json">
+        @Html.Raw(JsonSerializer.Serialize(
+            Model.PrzedmiotOpcje
+                .GroupBy(x => x.PrzedmiotId)
+                .Select(g => new {
+                    value = g.Key,
+                    label = g.First().Przedmiot!.Nazwa
+                })
+                .OrderBy(x => x.label)
+        ))
+    </script>
+
+    <script id="combos-json" type="application/json">
+        @Html.Raw(JsonSerializer.Serialize(
+            Model.PrzedmiotOpcje.Select(x => new {
+                id = x.IdPrzedmiotRodzajPoziom,
+                subjectId = x.PrzedmiotId,
+                rodzajId = x.PrzedmiotRodzajId,
+                rodzajName = x.PrzedmiotRodzaj!.Nazwa,
+                poziomId = x.PrzedmiotPoziomId,
+                poziomName = x.PrzedmiotPoziom!.Nazwa,
+                label = $"{x.Przedmiot!.Nazwa} / {x.PrzedmiotRodzaj!.Nazwa} / {x.PrzedmiotPoziom!.Nazwa}"
+            })
+        ))
+    </script>
+
+    <div class="alg-header">
+        <div class="alg-title-wrap">
+            <h1>Algorytm: @Model.Algorytm.Nazwa</h1>
+            <div class="sub">Konfiguracja wariantu dla wybranej matury</div>
+        </div>
+
+        <div class="alg-actions">
+            <button type="button"
+                    class="btn btn-primary"
+                    onclick="addGroup(@Model.AlgorytmMaturaId, null, window.currentAlgorytmId, window.currentMaturaId)">
+                Dodaj grupę główną
+            </button>
+
+            <a asp-action="Index" class="btn btn-secondary">Powrót</a>
+        </div>
+    </div>
+
+    <div class="matura-switch">
+        @foreach (var m in Model.Matury.OrderBy(x => x.IdMatura))
+        {
+            var activeClass = m.IdMatura == Model.SelectedMaturaId ? "matura-link active" : "matura-link";
+
+            <a asp-action="Details"
+               asp-route-id="@Model.Algorytm.IdAlgorytm"
+               asp-route-maturaId="@m.IdMatura"
+               class="@activeClass">
+                @m.Nazwa
+            </a>
+        }
+    </div>
+
+    <div id="algorytm-workspace">
+        @await Html.PartialAsync("_AlgorytmWorkspace", Model)
+    </div>
+</div>
+
+<div id="testModalBackdrop" class="test-modal-backdrop">
+    <div class="test-modal">
+        <div class="test-modal-header d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="mb-1">Testuj algorytm</h3>
+                <div class="text-muted">Wpisz tymczasowe wyniki testowego kandydata i sprawdź najlepszą ścieżkę.</div>
+            </div>
+            <button type="button" class="btn btn-outline-secondary" onclick="closeTestModal()">Zamknij</button>
+        </div>
+
+        <div class="test-modal-body">
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-outline-primary" onclick="addTestRow()">+ dodaj przedmiot</button>
+            </div>
+
+            <div id="testRows" class="test-rows"></div>
+
+            <div id="testResult" class="test-result d-none">
+                <div id="testScore" class="test-score"></div>
+                <ul id="testLines" class="test-lines"></ul>
+            </div>
+        </div>
+
+        <div class="test-modal-footer">
+            <div></div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary" onclick="runAlgorithmTest()">Przelicz punkty</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="saveToast" class="toast-box">Zapisano algorytm.</div>
+
+<script>
+    window.currentMaturaId = @Model.SelectedMaturaId;
+    window.currentAlgorytmId = @Model.Algorytm.IdAlgorytm;
+
+    window.subjectsData = JSON.parse(document.getElementById('subjects-json').textContent);
+    window.comboData = JSON.parse(document.getElementById('combos-json').textContent);
+
+    function getAntiForgeryToken() {
+        const tokenInput = document.querySelector('#antiForgeryHolder input[name="__RequestVerificationToken"]');
+        return tokenInput ? tokenInput.value : '';
+    }
+
+    function showToast(text, isError = false) {
+        const toast = document.getElementById('saveToast');
+        toast.textContent = text;
+        toast.classList.toggle('error', isError);
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    async function reloadWorkspace(algorytmId, maturaId) {
+        const response = await fetch(`/Algorytmy/EditorContent?id=${algorytmId}&maturaId=${maturaId}`);
+        const html = await response.text();
+        document.getElementById('algorytm-workspace').innerHTML = html;
+        initCustomPickers(document);
+        initSubjectBlocks(document);
+    }
+
+    function closeAllPickers() {
+        document.querySelectorAll('.custom-picker-dropdown.open').forEach(d => d.classList.remove('open'));
+    }
+
+    function initCustomPickers(root) {
+        const scope = root || document;
+
+        scope.querySelectorAll('.custom-picker').forEach(picker => {
+            if (picker.dataset.initialized === '1') return;
+            picker.dataset.initialized = '1';
+
+            const trigger = picker.querySelector('.custom-picker-trigger');
+            const dropdown = picker.querySelector('.custom-picker-dropdown');
+            const search = picker.querySelector('.custom-picker-search');
+            const options = picker.querySelectorAll('.custom-picker-option');
+            const hidden = picker.querySelector('input[type="hidden"]');
+            const label = picker.querySelector('.custom-picker-label');
+
+            trigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const isOpen = dropdown.classList.contains('open');
+                closeAllPickers();
+                if (!isOpen) {
+                    dropdown.classList.add('open');
+                    if (search) {
+                        search.value = '';
+                        options.forEach(o => o.classList.remove('hidden'));
+                        setTimeout(() => search.focus(), 0);
+                    }
+                }
+            });
+
+            options.forEach(option => {
+                option.addEventListener('click', function () {
+                    hidden.value = this.dataset.value;
+                    label.textContent = this.dataset.label;
+                    options.forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    dropdown.classList.remove('open');
+
+                    const subjectBlock = picker.closest('.js-subject-block');
+                    if (subjectBlock && hidden.classList.contains('js-subject-id')) {
+                        syncSubjectBlock(subjectBlock);
+                    }
+                });
+            });
+
+            if (search) {
+                search.addEventListener('input', function () {
+                    const q = this.value.toLowerCase().trim();
+                    options.forEach(option => {
+                        const txt = option.dataset.label.toLowerCase();
+                        option.classList.toggle('hidden', !txt.includes(q));
+                    });
+                });
+
+                search.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+
+        document.addEventListener('click', function () {
+            closeAllPickers();
+        });
+    }
+
+    function getCombosForSubject(subjectId) {
+        return window.comboData.filter(x => parseInt(x.subjectId) === parseInt(subjectId));
+    }
+
+    function syncCombinationRow(row) {
+        const subjectBlock = row.closest('.js-subject-block');
+        const subjectId = parseInt(subjectBlock.querySelector('.js-subject-id').value);
+
+        const combos = getCombosForSubject(subjectId);
+        if (!combos.length) return;
+
+        const rodzajSelect = row.querySelector('.js-rodzaj-id');
+        const poziomSelect = row.querySelector('.js-poziom-id');
+
+        const currentRodzaj = parseInt(rodzajSelect.value || '0');
+        const currentPoziom = parseInt(poziomSelect.value || '0');
+
+        const rodzaje = [...new Map(combos.map(c => [c.rodzajId, { id: c.rodzajId, name: c.rodzajName }])).values()]
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        const poziomy = [...new Map(combos.map(c => [c.poziomId, { id: c.poziomId, name: c.poziomName }])).values()]
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        rodzajSelect.innerHTML = '';
+        rodzaje.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = r.name;
+            rodzajSelect.appendChild(opt);
+        });
+
+        poziomSelect.innerHTML = '';
+        poziomy.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.name;
+            poziomSelect.appendChild(opt);
+        });
+
+        let match = combos.find(c => parseInt(c.rodzajId) === currentRodzaj && parseInt(c.poziomId) === currentPoziom);
+        if (!match) match = combos.find(c => parseInt(c.rodzajId) === currentRodzaj);
+        if (!match) match = combos.find(c => parseInt(c.poziomId) === currentPoziom);
+        if (!match) match = combos[0];
+
+        rodzajSelect.value = match.rodzajId;
+        poziomSelect.value = match.poziomId;
+    }
+
+    function syncSubjectBlock(subjectBlock) {
+        subjectBlock.querySelectorAll('.js-element-row').forEach(row => {
+            syncCombinationRow(row);
+        });
+    }
+
+    function initSubjectBlocks(root) {
+        const scope = root || document;
+
+        scope.querySelectorAll('.js-subject-block').forEach(block => {
+            if (block.dataset.initialized === '1') return;
+            block.dataset.initialized = '1';
+
+            block.querySelectorAll('.js-element-row').forEach(row => {
+                const rodzajSelect = row.querySelector('.js-rodzaj-id');
+                const poziomSelect = row.querySelector('.js-poziom-id');
+
+                rodzajSelect.addEventListener('change', function () {
+                    syncCombinationRow(row);
+                });
+
+                poziomSelect.addEventListener('change', function () {
+                    syncCombinationRow(row);
+                });
+
+                syncCombinationRow(row);
+            });
+        });
+    }
+
+    async function postFormUrlEncoded(url, payload) {
+        const token = getAntiForgeryToken();
+        const body = new URLSearchParams();
+        body.append('__RequestVerificationToken', token);
+
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === null || payload[key] === undefined || payload[key] === '') return;
+            body.append(key, payload[key]);
+        });
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: body.toString()
+        });
+
+        return response.json();
+    }
+
+    async function addGroup(algorytmMaturaId, rodzicId, algorytmId, maturaId) {
+        const result = await postFormUrlEncoded('/Algorytmy/AddGroupInlineAjax', {
+            algorytmMaturaId: algorytmMaturaId,
+            rodzicId: rodzicId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się dodać grupy.', true);
+        }
+    }
+
+    async function addElement(groupId, algorytmId, maturaId) {
+        const result = await postFormUrlEncoded('/Algorytmy/AddElementInlineAjax', {
+            groupId: groupId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się dodać elementu.', true);
+        }
+    }
+
+    async function addCombination(groupId, subjectId, algorytmId, maturaId) {
+        const result = await postFormUrlEncoded('/Algorytmy/AddCombinationInlineAjax', {
+            groupId: groupId,
+            subjectId: subjectId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się dodać kombinacji.', true);
+        }
+    }
+
+    async function deleteSubjectBlock(groupId, subjectId, algorytmId, maturaId) {
+        if (!confirm('Usunąć cały przedmiot wraz ze wszystkimi kombinacjami?')) return;
+
+        const result = await postFormUrlEncoded('/Algorytmy/DeleteSubjectBlockAjax', {
+            groupId: groupId,
+            subjectId: subjectId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się usunąć przedmiotu.', true);
+        }
+    }
+
+    async function deleteElement(elementId, algorytmId, maturaId) {
+        if (!confirm('Usunąć kombinację?')) return;
+
+        const result = await postFormUrlEncoded('/Algorytmy/DeleteElementAjax', {
+            elementId: elementId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się usunąć kombinacji.', true);
+        }
+    }
+
+    async function deleteGroup(groupId, algorytmId, maturaId) {
+        if (!confirm('Usunąć grupę wraz z podgrupami?')) return;
+
+        const result = await postFormUrlEncoded('/Algorytmy/DeleteGroupAjax', {
+            groupId: groupId
+        });
+
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+        } else {
+            showToast(result.message || 'Nie udało się usunąć grupy.', true);
+        }
+    }
+
+    async function saveAlgorithm(algorytmId, maturaId) {
+        const groupIds = [];
+        const operationIds = [];
+        const groupMinimums = [];
+
+        document.querySelectorAll('.js-group-op').forEach(el => {
+            const groupId = parseInt(el.dataset.groupId);
+            const minInput = document.querySelector(`.js-group-min[data-group-id="${groupId}"]`);
+
+            groupIds.push(groupId);
+            operationIds.push(parseInt(el.value));
+
+            const minVal = minInput && minInput.value !== '' ? parseFloat(minInput.value) : null;
+            groupMinimums.push(minVal);
+        });
+
+        const elementIds = [];
+        const przedmiotRodzajPoziomIds = [];
+        const liczby = [];
+        const elementRequiredFlags = [];
+        const elementMinimums = [];
+
+        document.querySelectorAll('.js-element-row').forEach(row => {
+            const elementId = parseInt(row.dataset.elementId);
+            const subjectId = parseInt(row.closest('.js-subject-block').querySelector('.js-subject-id').value);
+            const rodzajId = parseInt(row.querySelector('.js-rodzaj-id').value);
+            const poziomId = parseInt(row.querySelector('.js-poziom-id').value);
+
+            const combo = window.comboData.find(c =>
+                parseInt(c.subjectId) === subjectId &&
+                parseInt(c.rodzajId) === rodzajId &&
+                parseInt(c.poziomId) === poziomId
+            );
+
+            if (!combo) return;
+
+            elementIds.push(elementId);
+            przedmiotRodzajPoziomIds.push(parseInt(combo.id));
+            liczby.push(parseFloat(row.querySelector('.js-multiplier').value || '0'));
+            elementRequiredFlags.push(!!row.querySelector('.js-required').checked);
+
+            const minInput = row.querySelector('.js-element-min');
+            const minVal = minInput && minInput.value !== '' ? parseFloat(minInput.value) : null;
+            elementMinimums.push(minVal);
+        });
+
+        const response = await fetch('/Algorytmy/SaveAllAjax', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({
+                algorytmId,
+                maturaId,
+                groupIds,
+                operationIds,
+                groupMinimums,
+                elementIds,
+                przedmiotRodzajPoziomIds,
+                liczby,
+                elementRequiredFlags,
+                elementMinimums
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            await reloadWorkspace(algorytmId, maturaId);
+            showToast('Zapisano algorytm.');
+        } else {
+            showToast('Nie udało się zapisać algorytmu.', true);
+        }
+    }
+
+    function buildComboPickerHtml(selectedValue) {
+        const found = window.comboData.find(x => parseInt(x.id) === parseInt(selectedValue)) || window.comboData[0];
+        const optionsHtml = window.comboData.map(opt =>
+            `<div class="custom-picker-option ${parseInt(opt.id) === parseInt(found.id) ? 'active' : ''}" data-value="${opt.id}" data-label="${opt.label}">${opt.label}</div>`
+        ).join('');
+
+        return `
+            <div class="custom-picker">
+                <input type="hidden" class="js-test-combo-id" value="${found.id}" />
+                <button type="button" class="custom-picker-trigger">
+                    <span class="custom-picker-label">${found.label}</span>
+                    <span>▾</span>
+                </button>
+                <div class="custom-picker-dropdown">
+                    <div class="custom-picker-search-wrap">
+                        <input type="text" class="custom-picker-search" placeholder="Szukaj przedmiotu..." />
+                    </div>
+                    <div class="custom-picker-options">
+                        ${optionsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function openTestModal() {
+        const modal = document.getElementById('testModalBackdrop');
+        modal.classList.add('open');
+
+        const rows = document.getElementById('testRows');
+        rows.innerHTML = '';
+
+        addTestRow();
+        initCustomPickers(modal);
+
+        document.getElementById('testResult').classList.add('d-none');
+        document.getElementById('testLines').innerHTML = '';
+        document.getElementById('testScore').textContent = '';
+    }
+
+    function closeTestModal() {
+        document.getElementById('testModalBackdrop').classList.remove('open');
+    }
+
+    function addTestRow() {
+        const rows = document.getElementById('testRows');
+        const defaultValue = window.comboData.length ? window.comboData[0].id : 0;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'test-row js-test-row';
+        wrapper.innerHTML = `
+            ${buildComboPickerHtml(defaultValue)}
+            <input type="number" step="0.01" class="form-control js-test-points" placeholder="Punkty" />
+            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.js-test-row').remove()">Usuń</button>
+        `;
+
+        rows.appendChild(wrapper);
+        initCustomPickers(wrapper);
+    }
+
+    async function runAlgorithmTest() {
+        const rows = document.querySelectorAll('.js-test-row');
+
+        const inputs = [];
+        rows.forEach(row => {
+            const comboId = parseInt(row.querySelector('.js-test-combo-id').value);
+            const points = parseFloat(row.querySelector('.js-test-points').value || '0');
+
+            if (!isNaN(comboId)) {
+                inputs.push({
+                    przedmiotRodzajPoziomId: comboId,
+                    punkty: points
+                });
+            }
+        });
+
+        const response = await fetch('/Algorytmy/TestAlgorithm', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                algorytmId: window.currentAlgorytmId,
+                maturaId: window.currentMaturaId,
+                inputs: inputs
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) return;
+
+        const resultBox = document.getElementById('testResult');
+        const score = document.getElementById('testScore');
+        const lines = document.getElementById('testLines');
+
+        score.textContent = `Wynik testowego kandydata: ${result.points}`;
+
+        lines.innerHTML = '';
+        (result.lines || []).forEach(line => {
+            const li = document.createElement('li');
+            li.textContent = line;
+            lines.appendChild(li);
+        });
+
+        resultBox.classList.remove('d-none');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initCustomPickers(document);
+        initSubjectBlocks(document);
+    });
+</script>
